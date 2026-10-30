@@ -43,7 +43,8 @@ export function ErrorState({ message, onRetry }) {
 
 const badgeTones = {
   gray: 'bg-slate-100 text-slate-700 ring-slate-200',
-  blue: 'bg-brand-50 text-brand-800 ring-brand-200',
+  blue: 'bg-sky-50 text-sky-800 ring-sky-200',
+  brand: 'bg-brand-50 text-brand-800 ring-brand-200',
   green: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
   red: 'bg-red-50 text-red-800 ring-red-200',
   amber: 'bg-amber-50 text-amber-800 ring-amber-200',

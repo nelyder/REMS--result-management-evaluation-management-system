@@ -16,7 +16,7 @@ export default function UnauthorizedPage() {
       </p>
       <Link
         to={user ? homePathForRole(user.role) : '/login'}
-        className="mt-6 rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800"
+        className="mt-6 rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-on-brand hover:bg-brand-800"
       >
         {user ? 'Back to dashboard' : 'Go to sign in'}
       </Link>

@@ -4,6 +4,7 @@ import { AlertTriangle, GraduationCap, LogIn, ShieldCheck } from 'lucide-react';
 import { Button, Input } from '../../components/ui/index.js';
 import { homePathForRole, useAuth } from '../../contexts/AuthContext.jsx';
 import { isSupabaseConfigured } from '../../services/supabase.js';
+import { ThemeToggle } from '../../components/ThemeToggle.jsx';
 
 export default function LoginPage() {
   const { user, signIn } = useAuth();
@@ -46,26 +47,27 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden flex-col justify-between bg-brand-800 p-12 text-white lg:flex">
+      <div className="hidden flex-col justify-between bg-brand-800 p-12 text-on-brand lg:flex dark:border-r dark:border-slate-200 dark:bg-brand-50 dark:text-slate-900">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-white/10 p-2">
+          <div className="rounded-lg bg-on-brand/10 p-2 dark:bg-brand-100">
             <GraduationCap className="h-6 w-6" aria-hidden="true" />
           </div>
           <span className="text-lg font-semibold">REMS</span>
         </div>
         <div>
           <h2 className="text-3xl font-semibold leading-tight">Result Evaluation and Management System</h2>
-          <p className="mt-4 max-w-md text-brand-100">
+          <p className="mt-4 max-w-md text-brand-100 dark:text-slate-600">
             Accurate marks entry, consistent grading, and secure access to published results for
             administrators, lecturers, and students.
           </p>
         </div>
-        <p className="flex items-center gap-2 text-sm text-brand-200">
+        <p className="flex items-center gap-2 text-sm text-brand-200 dark:text-slate-500">
           <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Access is restricted to authorised university accounts.
         </p>
       </div>
 
-      <div className="flex items-center justify-center px-4 py-12 sm:px-6">
+      <div className="relative flex items-center justify-center px-4 py-12 sm:px-6">
+        <ThemeToggle compact className="absolute right-4 top-4" />
         <div className="w-full max-w-sm">
           <div className="mb-8 flex items-center gap-2 lg:hidden">
             <GraduationCap className="h-7 w-7 text-brand-700" aria-hidden="true" />

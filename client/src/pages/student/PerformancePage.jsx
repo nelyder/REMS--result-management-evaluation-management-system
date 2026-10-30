@@ -39,7 +39,7 @@ export default function PerformancePage() {
                   <th scope="col" className="px-4 py-2.5 text-left">Weighted average</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-surface">
                 {periods.map((p) => (
                   <tr key={p.academicPeriod.id}>
                     <td className="px-4 py-3 font-medium text-slate-900">{periodLabel(p.academicPeriod)}</td>

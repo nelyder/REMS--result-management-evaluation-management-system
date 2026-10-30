@@ -18,7 +18,7 @@ export function StudentResultsTable({ rows, caption }) {
             <th scope="col" className="px-4 py-2.5 text-left">Result</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 bg-white">
+        <tbody className="divide-y divide-slate-100 bg-surface">
           {rows.map((r) => (
             <tr key={r.id}>
               <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs">{r.course.code}</td>

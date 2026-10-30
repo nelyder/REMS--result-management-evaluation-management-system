@@ -30,7 +30,7 @@ export default function CourseStudentsPage() {
         actions={
           <Link
             to={`/lecturer/courses/${courseId}/periods/${periodId}/marks`}
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-800"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand-700 px-4 text-sm font-medium text-on-brand hover:bg-brand-800"
           >
             <ClipboardEdit className="h-4 w-4" aria-hidden="true" /> Enter marks
           </Link>

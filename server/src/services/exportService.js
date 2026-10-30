@@ -70,7 +70,7 @@ export async function exportCourseResults(db, user, courseId, { academicPeriodId
   const header = ws.addRow(COLUMNS.map((c) => c.header));
   header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
   header.eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6743BD' } };
   });
   for (const r of rows) ws.addRow(Object.fromEntries(Object.entries(r).map(([k, v]) => [k, safeCell(v)])));
   ws.views = [{ state: 'frozen', ySplit: 4 }];

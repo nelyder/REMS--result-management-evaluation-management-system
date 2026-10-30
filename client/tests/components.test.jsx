@@ -13,6 +13,8 @@ vi.mock('../src/services/supabase.js', () => ({ supabase: null, isSupabaseConfig
 const { ProtectedRoute } = await import('../src/components/ProtectedRoute.jsx');
 const { default: LoginPage } = await import('../src/pages/public/LoginPage.jsx');
 const { ConfirmDialog } = await import('../src/components/ui/index.js');
+const { ThemeProvider } = await import('../src/contexts/ThemeContext.jsx');
+const { ThemeToggle } = await import('../src/components/ThemeToggle.jsx');
 
 function renderGuard(path, roles) {
   return render(
@@ -53,12 +55,14 @@ describe('ProtectedRoute', () => {
 describe('LoginPage', () => {
   const renderLogin = () =>
     render(
-      <MemoryRouter initialEntries={['/login']}>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/lecturer" element={<p>lecturer home</p>} />
-        </Routes>
-      </MemoryRouter>,
+      <ThemeProvider>
+        <MemoryRouter initialEntries={['/login']}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/lecturer" element={<p>lecturer home</p>} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
     );
 
   it('validates required fields before calling sign-in', async () => {
@@ -98,5 +102,32 @@ describe('ConfirmDialog', () => {
     expect(onConfirm).toHaveBeenCalled();
     await userEvent.keyboard('{Escape}');
     expect(onClose).toHaveBeenCalled();
+  });
+});
+
+describe('ThemeToggle', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    document.documentElement.classList.remove('dark');
+  });
+
+  it('switches to dark and back, and remembers the choice', async () => {
+    render(<ThemeProvider><ThemeToggle /></ThemeProvider>);
+    expect(screen.getByRole('button', { name: /system/i })).toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(screen.getByRole('button', { name: /dark/i }));
+    expect(document.documentElement).toHaveClass('dark');
+    expect(screen.getByRole('button', { name: /dark/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(window.localStorage.getItem('rems-theme')).toBe('dark');
+
+    await userEvent.click(screen.getByRole('button', { name: /light/i }));
+    expect(document.documentElement).not.toHaveClass('dark');
+    expect(window.localStorage.getItem('rems-theme')).toBe('light');
+  });
+
+  it('starts from the saved preference', () => {
+    window.localStorage.setItem('rems-theme', 'dark');
+    render(<ThemeProvider><ThemeToggle /></ThemeProvider>);
+    expect(document.documentElement).toHaveClass('dark');
   });
 });

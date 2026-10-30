@@ -1,24 +1,99 @@
 @import "tailwindcss";
 
+/* `dark:` utilities follow the .dark class that ThemeContext puts on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
-  --color-brand-900: #1e3a8a;
+  /* Lavender brand. White text on brand-700 is 6.8:1; brand-700 text on white is 6.8:1. */
+  --color-brand-50: #f7f5fe;
+  --color-brand-100: #efeafd;
+  --color-brand-200: #e0d7fb;
+  --color-brand-300: #c9b8f7;
+  --color-brand-400: #ab92f0;
+  --color-brand-500: #8f6de6;
+  --color-brand-600: #7a54d8;
+  --color-brand-700: #6743bd;
+  --color-brand-800: #55389a;
+  --color-brand-900: #45307b;
+  /* Semantic surfaces: use bg-surface for panels (not bg-white) so dark mode can swap it. */
+  --color-canvas: #f8f7fc;
+  --color-surface: #ffffff;
+  --color-on-brand: #ffffff; /* text on bg-brand-700/800 */
+}
+
+/*
+ * Dark mode is a token swap: the neutral scale, surfaces, brand and status tints are
+ * redefined, so the same utility classes (text-slate-900, bg-slate-50, bg-emerald-50 ...)
+ * read correctly on dark surfaces. Screen only — printing always uses the light palette.
+ */
+@media screen {
+  .dark {
+    color-scheme: dark;
+    --color-canvas: #12101c;
+    --color-surface: #1b1829;
+    --color-on-brand: #1a1530;
+
+    --color-slate-50: #221e33;
+    --color-slate-100: #2a263d;
+    --color-slate-200: #363149;
+    --color-slate-300: #4a445f;
+    --color-slate-400: #7f7a96;
+    --color-slate-500: #a29db8;
+    --color-slate-600: #bcb7d0;
+    --color-slate-700: #d2cee2;
+    --color-slate-800: #e3e0ee;
+    --color-slate-900: #f3f1f9;
+
+    /* brand-700 is a button background (with on-brand text) and a link colour. */
+    --color-brand-50: #251e40;
+    --color-brand-100: #2f2654;
+    --color-brand-200: #45377a;
+    --color-brand-300: #6550a8;
+    --color-brand-400: #8a70dc;
+    --color-brand-500: #9c84ee;
+    --color-brand-600: #ab95f3;
+    --color-brand-700: #bba7f6;
+    --color-brand-800: #cdbdf9;
+    --color-brand-900: #e0d5fc;
+
+    --color-emerald-50: #0f261d;
+    --color-emerald-200: #1d4a37;
+    --color-emerald-700: #6ee7b7;
+    --color-emerald-800: #8eeec8;
+    --color-emerald-900: #b8f5db;
+
+    --color-red-50: #2e1416;
+    --color-red-100: #3c191c;
+    --color-red-200: #5c2529;
+    --color-red-700: #fca5a5;
+    --color-red-800: #fdb6b6;
+    --color-red-900: #fecaca;
+
+    --color-amber-50: #2b2110;
+    --color-amber-200: #5a4419;
+    --color-amber-700: #fcd34d;
+    --color-amber-800: #fde68a;
+    --color-amber-900: #fef3c7;
+
+    --color-violet-50: #2a1d44;
+    --color-violet-200: #523a8a;
+    --color-violet-700: #d8b4fe;
+    --color-violet-800: #e9d5ff;
+
+    --color-sky-50: #0e2433;
+    --color-sky-200: #1c4a66;
+    --color-sky-800: #a5dcf7;
+  }
 }
 
 @layer base {
-  html { @apply bg-slate-50 text-slate-800 antialiased; }
+  html { @apply bg-canvas text-slate-800 antialiased; }
   body { @apply min-h-screen; }
   :focus-visible { @apply outline-2 outline-offset-2 outline-brand-600; }
 }
 
 @media print {
   .no-print { display: none !important; }
-  body { background: #fff; }
+  html, body { background: #fff; }
 }

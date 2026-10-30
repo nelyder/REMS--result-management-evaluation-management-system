@@ -46,6 +46,7 @@ vi.mock('../src/services/supabase.js', () => ({
 vi.mock('../src/services/index.js', () => mocks.services);
 
 const { ToastProvider } = await import('../src/contexts/ToastContext.jsx');
+const { ThemeProvider } = await import('../src/contexts/ThemeContext.jsx');
 const { ApiError } = await import('../src/services/api.js');
 const { default: MarksEntryPage } = await import('../src/pages/lecturer/MarksEntryPage.jsx');
 const { default: StudentsPage } = await import('../src/pages/admin/StudentsPage.jsx');
@@ -62,14 +63,16 @@ const period = { id: 'p1', academicYear: '2026/2027', semester: 1, startDate: '2
 
 function renderAt(path, routePath, element, extraRoutes = null) {
   return render(
-    <ToastProvider>
-      <MemoryRouter initialEntries={[path]}>
-        <Routes>
-          <Route path={routePath} element={element} />
-          {extraRoutes}
-        </Routes>
-      </MemoryRouter>
-    </ToastProvider>,
+    <ThemeProvider>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route path={routePath} element={element} />
+            {extraRoutes}
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
+    </ThemeProvider>,
   );
 }
 

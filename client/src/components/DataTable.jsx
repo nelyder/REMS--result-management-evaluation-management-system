@@ -63,7 +63,7 @@ export function DataTable({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody className="divide-y divide-slate-100 bg-surface">
             {loading &&
               Array.from({ length: skeletonRows }).map((_, i) => (
                 <tr key={`sk-${i}`}>

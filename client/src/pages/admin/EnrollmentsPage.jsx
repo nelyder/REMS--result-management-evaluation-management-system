@@ -101,7 +101,7 @@ function EnrollModal({ open, onClose, courseId, periodId, onDone }) {
             type="button"
             aria-selected={mode === key}
             onClick={() => setMode(key)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium ${mode === key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${mode === key ? 'bg-surface text-slate-900 shadow-sm' : 'text-slate-600'}`}
           >
             {label}
           </button>

@@ -290,7 +290,7 @@ export default function MarksEntryPage() {
           ['Complete', counts.complete],
           ['Published', counts.published],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+          <div key={label} className="rounded-lg border border-slate-200 bg-surface px-4 py-3">
             <p className="text-xs text-slate-500">{label}</p>
             <p className="text-lg font-semibold text-slate-900">{value}</p>
           </div>
@@ -343,7 +343,7 @@ export default function MarksEntryPage() {
                   <th scope="col" className="px-4 py-3 text-right"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100 bg-surface">
                 {filtered.map((row, index) => {
                   const mode = rowEditMode(row);
                   const v = valuesFor(row);
@@ -380,7 +380,7 @@ export default function MarksEntryPage() {
                             onChange={(e) => setValue(row, field, e.target.value)}
                             onKeyDown={(e) => onKeyDown(e, index, field)}
                           />
-                          {preview.errors[field] && <p className="mt-0.5 text-[11px] text-red-600">{preview.errors[field]}</p>}
+                          {preview.errors[field] && <p className="mt-0.5 text-[11px] text-red-700">{preview.errors[field]}</p>}
                         </td>
                       ))}
                       <td className="px-3 py-2 text-right font-semibold tabular-nums">{formatMark(total)}</td>

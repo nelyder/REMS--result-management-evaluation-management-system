@@ -1,10 +1,10 @@
 import { Loader2 } from 'lucide-react';
 
 const variants = {
-  primary: 'bg-brand-700 text-white hover:bg-brand-800 disabled:bg-brand-700/60',
-  secondary: 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:text-slate-400',
-  danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-600/60',
-  success: 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-600/60',
+  primary: 'bg-brand-700 text-on-brand hover:bg-brand-800 disabled:bg-brand-700/60',
+  secondary: 'border border-slate-300 bg-surface text-slate-700 hover:bg-slate-50 disabled:text-slate-400',
+  danger: 'bg-red-600 text-white hover:brightness-90 disabled:bg-red-600/60',
+  success: 'bg-emerald-600 text-white hover:brightness-90 disabled:bg-emerald-600/60',
   ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:text-slate-400',
 };
 const sizes = {

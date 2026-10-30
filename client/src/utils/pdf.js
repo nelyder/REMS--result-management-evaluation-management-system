@@ -6,12 +6,14 @@ import { formatMark, periodLabel } from './format.js';
  * Builds a result statement PDF from data returned by /students/me/* or, for admins,
  * /students/:id/statement. Both only ever contain published results.
  */
+const BRAND = [103, 67, 189]; // lavender brand-700
+
 export function downloadStatementPdf({ profile, results, summary }) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const width = doc.internal.pageSize.getWidth();
   const generated = new Date().toLocaleString();
 
-  doc.setFillColor(29, 78, 216);
+  doc.setFillColor(...BRAND);
   doc.rect(0, 0, width, 70, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
@@ -65,7 +67,7 @@ export function downloadStatementPdf({ profile, results, summary }) {
         ? [[{ content: `Credits: ${ps.creditsAttempted}   Weighted average: ${formatMark(ps.average)}   GPA: ${ps.gpa ?? '—'}`, colSpan: 8 }]]
         : undefined,
       styles: { fontSize: 9, cellPadding: 4 },
-      headStyles: { fillColor: [29, 78, 216] },
+      headStyles: { fillColor: BRAND },
       footStyles: { fillColor: [248, 250, 252], textColor: [51, 65, 85], fontStyle: 'normal' },
       margin: { left: 40, right: 40 },
     });

@@ -50,10 +50,10 @@ export function ResultStatement({ title, description, breadcrumb, person, result
       ) : !groups.length ? (
         <EmptyState title="No published results" message="A statement becomes available once results are published." />
       ) : (
-        <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:border-0 print:p-0 print:shadow-none">
+        <article className="rounded-xl border border-slate-200 bg-surface p-6 shadow-sm print:border-0 print:p-0 print:shadow-none">
           <header className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-brand-700 p-2"><GraduationCap className="h-6 w-6 text-white" aria-hidden="true" /></div>
+              <div className="rounded-lg bg-brand-700 p-2"><GraduationCap className="h-6 w-6 text-on-brand" aria-hidden="true" /></div>
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Statement of Results</h2>
                 <p className="text-xs text-slate-500">Result Evaluation and Management System</p>
