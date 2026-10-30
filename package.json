@@ -12,7 +12,7 @@
     "build": "npm run build -w client",
     "start": "npm run start -w server",
     "test": "npm test -w server && npm test -w client",
-    "lint": "npm run lint -w client"
+    "lint": "npm run lint -w server && npm run lint -w client"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

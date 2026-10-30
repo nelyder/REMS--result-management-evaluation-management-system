@@ -57,7 +57,7 @@ export async function exportCourseResults(db, user, courseId, { academicPeriodId
 
   const base = `${course.data.course_code.replace(/\s+/g, '')}_${period.data.academic_year.replace('/', '-')}_S${period.data.semester}`;
   if (format === 'csv') {
-    return { filename: `${base}.csv`, contentType: 'text/csv; charset=utf-8', body: Buffer.from(`﻿${toCsv(rows)}`, 'utf8') };
+    return { filename: `${base}.csv`, contentType: 'text/csv; charset=utf-8', body: Buffer.from(`\uFEFF${toCsv(rows)}`, 'utf8') };
   }
 
   const wb = new ExcelJS.Workbook();

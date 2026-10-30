@@ -4,7 +4,6 @@ export function notFoundHandler(req, res) {
   res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Endpoint not found.' } });
 }
 
-// eslint-disable-next-line no-unused-vars
 export function errorHandler(err, req, res, _next) {
   let error = err;
   if (!(error instanceof HttpError)) {
