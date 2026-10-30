@@ -4,7 +4,11 @@ import { Button } from './Button.jsx';
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-/** Accessible dialog: traps focus, closes on Escape, restores focus on close. */
+// Open dialogs, innermost last. Only the top one reacts to Escape/Tab, so a confirmation
+// opened over another dialog closes on its own.
+const openStack = [];
+
+/** Accessible dialog: traps focus, closes on Escape, restores focus on close. Can be stacked. */
 export function Modal({ open, onClose, title, description, children, footer, size = 'md' }) {
   const titleId = useId();
   const panelRef = useRef(null);
@@ -15,9 +19,11 @@ export function Modal({ open, onClose, title, description, children, footer, siz
     if (!open) return undefined;
     const previouslyFocused = document.activeElement;
     const panel = panelRef.current;
+    openStack.push(panel);
     (panel.querySelector('[data-autofocus]') || panel.querySelector(FOCUSABLE) || panel).focus();
 
     const onKey = (e) => {
+      if (openStack[openStack.length - 1] !== panel) return;
       if (e.key === 'Escape') onCloseRef.current?.();
       if (e.key !== 'Tab') return;
       const items = [...panel.querySelectorAll(FOCUSABLE)];
@@ -36,8 +42,11 @@ export function Modal({ open, onClose, title, description, children, footer, siz
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-      previouslyFocused?.focus?.();
+      openStack.splice(openStack.indexOf(panel), 1);
+      if (!openStack.length) document.body.style.overflow = '';
+      // The opener may be gone (e.g. a removed list row); fall back to the dialog underneath.
+      if (previouslyFocused?.isConnected) previouslyFocused.focus?.();
+      else openStack[openStack.length - 1]?.focus();
     };
   }, [open]);
 

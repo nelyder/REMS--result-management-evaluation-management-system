@@ -8,7 +8,7 @@ import { useApi } from '../../hooks/useApi.js';
 import { useListQuery } from '../../hooks/useListQuery.js';
 import { formatDateTime, titleCase } from '../../utils/format.js';
 
-const ENTITY_TYPES = ['results', 'profiles', 'students', 'lecturers', 'courses', 'enrollments', 'course_assignments', 'grading_scales', 'evaluation_settings', 'academic_periods'].map((v) => ({
+const ENTITY_TYPES = ['results', 'profiles', 'students', 'lecturers', 'courses', 'enrollments', 'course_assignments', 'grading_scales', 'evaluation_settings', 'academic_periods', 'assignments', 'assignment_students'].map((v) => ({
   value: v,
   label: titleCase(v),
 }));

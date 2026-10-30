@@ -21,3 +21,18 @@ export const formatDateTime = (value) =>
 export const periodLabel = (p) => (p ? `${p.academicYear} · Semester ${p.semester}` : '—');
 
 export const titleCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ') : '');
+
+/** 'overdue' | 'soon' (within 3 days) | 'upcoming' for an ISO due date. */
+export function dueState(dueAt, now = Date.now()) {
+  const ms = new Date(dueAt).getTime() - now;
+  if (ms < 0) return 'overdue';
+  return ms <= 3 * 24 * 60 * 60 * 1000 ? 'soon' : 'upcoming';
+}
+
+/** ISO timestamp -> value for <input type="datetime-local"> in the browser's time zone. */
+export function toDateTimeLocal(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}

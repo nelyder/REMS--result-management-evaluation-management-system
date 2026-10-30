@@ -8,6 +8,7 @@ import {
   auditHandlers,
   auth,
   courses,
+  courseworkHandlers as coursework,
   departments,
   enrollmentHandlers,
   lecturers,
@@ -40,6 +41,8 @@ router.get('/profile', anyRole, auth.me);
 // ---- students (/me routes first so "me" is not parsed as an id)
 router.get('/students/me/results', student, validate({ query: s.myResultsQuery }), students.myResults);
 router.get('/students/me/summary', student, students.mySummary);
+router.get('/students/me/assignments', student, validate({ query: s.myAssignmentsQuery }), students.myAssignments);
+router.get('/students/me/assignments/:id', student, validate({ params: s.idParams }), students.myAssignment);
 router.get('/students', admin, validate({ query: s.studentListQuery }), students.list);
 router.post('/students', admin, validate({ body: s.studentCreate }), students.create);
 router.get('/students/:id', admin, validate({ params: s.idParams }), students.get);
@@ -74,6 +77,25 @@ router.get('/course-assignments', admin, validate({ query: s.assignmentListQuery
 router.post('/course-assignments', admin, validate({ body: s.assignmentBody }), assignments.create);
 router.delete('/course-assignments/:id', admin, validate({ params: s.idParams }), assignments.remove);
 router.get('/lecturer/assignments', lecturer, validate({ query: s.assignmentListQuery }), assignments.mine);
+
+// ---- coursework assignments (staff; the service checks course assignment for lecturers)
+router.get('/assignments', staff, validate({ query: s.courseworkListQuery }), coursework.list);
+router.post('/assignments', staff, validate({ body: s.courseworkCreate }), coursework.create);
+// Before /assignments/:id so "eligible-students" is not parsed as an id.
+router.get('/assignments/eligible-students', staff, validate({ query: s.eligibleStudentsQuery }), coursework.eligibleForOffering);
+router.get('/assignments/:id', staff, validate({ params: s.idParams }), coursework.get);
+router.patch('/assignments/:id', staff, validate({ params: s.idParams, body: s.courseworkUpdate }), coursework.update);
+router.delete('/assignments/:id', staff, validate({ params: s.idParams }), coursework.remove);
+router.get('/assignments/:id/students', staff, validate({ params: s.idParams }), coursework.students);
+router.get('/assignments/:id/eligible-students', staff, validate({ params: s.idParams }), coursework.eligible);
+router.post('/assignments/:id/students', staff, validate({ params: s.idParams, body: s.studentIdsAdd }), coursework.addStudents);
+router.put('/assignments/:id/students', staff, validate({ params: s.idParams, body: s.studentIdsSet }), coursework.setStudents);
+router.delete(
+  '/assignments/:id/students/:studentId',
+  staff,
+  validate({ params: s.assignmentStudentParams }),
+  coursework.removeStudent,
+);
 
 // ---- enrollments
 router.get(

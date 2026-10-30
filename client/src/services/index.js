@@ -17,6 +17,8 @@ export const studentsService = {
   myResults: (params) => http.get('/students/me/results', params),
   mySummary: () => http.get('/students/me/summary'),
   statement: (id) => http.get(`/students/${id}/statement`),
+  myAssignments: (params) => http.get('/students/me/assignments', params),
+  myAssignment: (id) => http.get(`/students/me/assignments/${id}`),
 };
 
 export const lecturersService = crud('/lecturers');
@@ -27,6 +29,21 @@ export const periodsService = crud('/academic-periods');
 export const assignmentsService = {
   ...crud('/course-assignments'),
   mine: (params) => http.get('/lecturer/assignments', params),
+};
+
+/** Coursework assignments (not to be confused with lecturer course assignments above). */
+export const courseworkService = {
+  list: (params) => http.get('/assignments', params),
+  get: (id) => http.get(`/assignments/${id}`),
+  create: (body) => http.post('/assignments', body),
+  update: (id, body) => http.patch(`/assignments/${id}`, body),
+  remove: (id) => http.del(`/assignments/${id}`),
+  eligibleForOffering: (params) => http.get('/assignments/eligible-students', params),
+  eligible: (id) => http.get(`/assignments/${id}/eligible-students`),
+  students: (id) => http.get(`/assignments/${id}/students`),
+  addStudents: (id, studentIds) => http.post(`/assignments/${id}/students`, { studentIds }),
+  setStudents: (id, studentIds) => http.put(`/assignments/${id}/students`, { studentIds }),
+  removeStudent: (id, studentId) => http.del(`/assignments/${id}/students/${studentId}`),
 };
 
 export const enrollmentsService = {

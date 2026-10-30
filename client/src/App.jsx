@@ -31,6 +31,7 @@ const AuditLogsPage = page(() => import('./pages/admin/AuditLogsPage.jsx'));
 // Shared staff
 const ResultsBrowserPage = page(() => import('./pages/lecturer/ResultsBrowserPage.jsx'));
 const MarksEntryPage = page(() => import('./pages/lecturer/MarksEntryPage.jsx'));
+const CourseworkPage = page(() => import('./pages/lecturer/CourseworkPage.jsx'));
 // Lecturer
 const LecturerDashboard = page(() => import('./pages/lecturer/LecturerDashboard.jsx'));
 const MyCoursesPage = page(() => import('./pages/lecturer/MyCoursesPage.jsx'));
@@ -40,6 +41,8 @@ const StudentDashboard = page(() => import('./pages/student/StudentDashboard.jsx
 const MyResultsPage = page(() => import('./pages/student/MyResultsPage.jsx'));
 const PerformancePage = page(() => import('./pages/student/PerformancePage.jsx'));
 const StatementPage = page(() => import('./pages/student/StatementPage.jsx'));
+const StudentAssignmentsPage = page(() => import('./pages/student/AssignmentsPage.jsx'));
+const StudentAssignmentDetailPage = page(() => import('./pages/student/AssignmentDetailPage.jsx'));
 // Any role
 const ProfilePage = page(() => import('./pages/ProfilePage.jsx'));
 
@@ -74,6 +77,7 @@ export default function App() {
               <Route path="/admin/academic-periods" element={<AcademicPeriodsPage />} />
               <Route path="/admin/assignments" element={<AssignmentsPage />} />
               <Route path="/admin/enrollments" element={<EnrollmentsPage />} />
+              <Route path="/admin/coursework" element={<CourseworkPage />} />
               <Route path="/admin/results" element={<ResultsBrowserPage />} />
               <Route path="/admin/courses/:courseId/periods/:periodId/marks" element={<MarksEntryPage />} />
               <Route path="/admin/publication" element={<PublicationPage />} />
@@ -87,6 +91,7 @@ export default function App() {
               <Route path="/lecturer/courses" element={<MyCoursesPage />} />
               <Route path="/lecturer/courses/:courseId/periods/:periodId/students" element={<CourseStudentsPage />} />
               <Route path="/lecturer/courses/:courseId/periods/:periodId/marks" element={<MarksEntryPage />} />
+              <Route path="/lecturer/assignments" element={<CourseworkPage />} />
               <Route path="/lecturer/results" element={<ResultsBrowserPage />} />
               <Route path="/lecturer/reports" element={<ReportsPage />} />
             </Route>
@@ -96,6 +101,8 @@ export default function App() {
               <Route path="/student/results" element={<MyResultsPage />} />
               <Route path="/student/performance" element={<PerformancePage />} />
               <Route path="/student/statement" element={<StatementPage />} />
+              <Route path="/student/assignments" element={<StudentAssignmentsPage />} />
+              <Route path="/student/assignments/:id" element={<StudentAssignmentDetailPage />} />
             </Route>
           </Route>
         </Route>

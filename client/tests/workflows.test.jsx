@@ -1,6 +1,6 @@
 // Form and dashboard workflows. Services and auth are mocked; data is fictional.
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
@@ -21,7 +21,12 @@ const mocks = vi.hoisted(() => {
       enrollmentsService: { forCourse: fn() },
       settingsService: { getEvaluation: fn(), getGradingScales: fn() },
       resultsService: { save: fn(), update: fn(), get: fn(), publishCourse: fn(), submitCourse: fn(), exportCourse: fn() },
-      studentsService: { list: fn(), create: fn(), update: fn(), statement: fn() },
+      studentsService: { list: fn(), create: fn(), update: fn(), statement: fn(), myAssignments: fn(), myAssignment: fn() },
+      assignmentsService: { mine: fn() },
+      courseworkService: {
+        list: fn(), create: fn(), update: fn(), remove: fn(), eligibleForOffering: fn(), eligible: fn(),
+        students: fn(), addStudents: fn(), removeStudent: fn(),
+      },
       programmesService: { list: fn() },
       departmentsService: { list: fn() },
       coursesService: { list: fn() },
@@ -56,6 +61,9 @@ const { default: ForgotPasswordPage } = await import('../src/pages/public/Forgot
 const { default: ResetPasswordPage } = await import('../src/pages/public/ResetPasswordPage.jsx');
 const { default: LoginPage } = await import('../src/pages/public/LoginPage.jsx');
 const { ChangePasswordForm } = await import('../src/components/ChangePasswordForm.jsx');
+const { default: CourseworkPage } = await import('../src/pages/lecturer/CourseworkPage.jsx');
+const { default: StudentAssignmentsPage } = await import('../src/pages/student/AssignmentsPage.jsx');
+const { default: StudentAssignmentDetailPage } = await import('../src/pages/student/AssignmentDetailPage.jsx');
 
 const s = mocks.services;
 const ok = (data, meta) => Promise.resolve({ data, meta });
@@ -353,5 +361,175 @@ describe('password reset and change', () => {
     await userEvent.type(screen.getByLabelText(/confirm new password/i), 'New-Password-1');
     await userEvent.click(screen.getByRole('button', { name: /change password/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Your current password is incorrect.');
+  });
+});
+
+// ---------------------------------------------------------------- coursework assignments
+describe('Assignment dialog', () => {
+  const student = (id, name, reg, assigned = false) => ({
+    studentId: id,
+    enrollmentId: `e-${id}`,
+    enrollmentStatus: 'enrolled',
+    assigned,
+    student: { id, fullName: name, registrationNumber: reg, programmeCode: 'BSC-CS', yearOfStudy: 1 },
+  });
+  const amina = student('s1', 'Amina Test', 'REG/2025/0001');
+  const brian = student('s2', 'Brian Sample', 'REG/2025/0002');
+  const chidi = student('s3', 'Chidi Example', 'REG/2025/0003');
+  const assignment = {
+    id: 'a1',
+    title: 'Essay on sorting',
+    description: 'Compare merge sort and quicksort.',
+    courseId: 'c1',
+    academicPeriodId: 'p1',
+    course: { id: 'c1', code: 'CSC 201', name: 'Data Structures' },
+    academicPeriod: period,
+    dueAt: '2099-05-01T12:00:00.000Z',
+    maxMarks: 20,
+    assignedCount: 2,
+  };
+  const linked = (st) => ({ id: `l-${st.studentId}`, studentId: st.studentId, status: 'assigned', student: st.student });
+
+  beforeEach(() => {
+    mocks.auth.user = { role: 'lecturer', fullName: 'Lena Okafor' };
+    s.assignmentsService.mine.mockImplementation(() =>
+      ok([{ id: 'ca1', courseId: 'c1', course: { code: 'CSC 201', name: 'Data Structures' }, academicPeriodId: 'p1', academicPeriod: period }]),
+    );
+    s.courseworkService.list.mockImplementation(() => ok([], { page: 1, pageSize: 20, total: 0 }));
+    s.courseworkService.eligibleForOffering.mockImplementation(() => ok([amina, brian, chidi]));
+  });
+
+  const renderPage = () => renderAt('/lecturer/assignments', '/lecturer/assignments', <CourseworkPage />);
+  const openCreate = async () => {
+    renderPage();
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Add assignment' }))[0]);
+    return screen.getByRole('dialog', { name: 'Add assignment' });
+  };
+
+  it('creates an assignment for exactly the selected students', async () => {
+    s.courseworkService.create.mockResolvedValue({ data: { id: 'a9' } });
+    const dialog = await openCreate();
+    await userEvent.type(within(dialog).getByLabelText(/assignment title/i), 'Essay on sorting');
+    await userEvent.selectOptions(within(dialog).getByLabelText(/^course/i), 'c1');
+
+    // The only year and semester for this course are picked automatically.
+    expect(await within(dialog).findByText('Amina Test')).toBeInTheDocument();
+    expect(s.courseworkService.eligibleForOffering).toHaveBeenCalledWith({ courseId: 'c1', academicPeriodId: 'p1' });
+
+    // Search narrows the list; select-all applies to the matches only.
+    await userEvent.type(within(dialog).getByLabelText('Search students'), 'brian');
+    expect(within(dialog).queryByRole('checkbox', { name: /Amina Test/ })).not.toBeInTheDocument();
+    await userEvent.click(within(dialog).getByLabelText('Select all 1 matching'));
+    expect(within(dialog).getByText('1 selected')).toBeInTheDocument();
+
+    await userEvent.clear(within(dialog).getByLabelText('Search students'));
+    await userEvent.click(within(dialog).getByLabelText('Select all 3 students'));
+    expect(within(dialog).getByText('3 selected')).toBeInTheDocument();
+    expect(within(dialog).getByRole('heading', { name: /selected \(3\)/i })).toBeInTheDocument();
+
+    // Deselect from the selected list before saving.
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove Chidi Example from selection' }));
+    expect(within(dialog).getByText('2 selected')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/Chidi Example/)).not.toBeChecked();
+
+    fireEvent.change(within(dialog).getByLabelText(/due date/i), { target: { value: '2099-05-01T12:00' } });
+    await userEvent.type(within(dialog).getByLabelText(/maximum marks/i), '20');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Create assignment' }));
+
+    expect(s.courseworkService.create).toHaveBeenCalledTimes(1);
+    const body = s.courseworkService.create.mock.calls[0][0];
+    expect(body).toMatchObject({
+      title: 'Essay on sorting',
+      description: null,
+      courseId: 'c1',
+      academicPeriodId: 'p1',
+      dueAt: new Date('2099-05-01T12:00').toISOString(),
+      maxMarks: 20,
+    });
+    expect([...body.studentIds].sort()).toEqual(['s1', 's2']);
+    expect(await screen.findByText('Assignment created and assigned to 2 students.')).toBeInTheDocument();
+  });
+
+  it('validates the details before calling the API', async () => {
+    const dialog = await openCreate();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Create assignment' }));
+    expect(within(dialog).getByText('Enter a title of at least 3 characters')).toBeInTheDocument();
+    expect(within(dialog).getByText('Choose a course')).toBeInTheDocument();
+    expect(within(dialog).getByText('Choose a due date and time')).toBeInTheDocument();
+    expect(within(dialog).getByText('Enter a number from 0.01 to 1000')).toBeInTheDocument();
+    expect(s.courseworkService.create).not.toHaveBeenCalled();
+  });
+
+  it('confirms before removing an assigned student and updates the list immediately', async () => {
+    s.courseworkService.list.mockImplementation(() => ok([assignment], { page: 1, pageSize: 20, total: 1 }));
+    s.courseworkService.students.mockImplementation(() => ok([linked(amina), linked(brian)]));
+    s.courseworkService.eligible.mockImplementation(() => ok([{ ...amina, assigned: true }, { ...brian, assigned: true }, chidi]));
+    s.courseworkService.removeStudent.mockResolvedValue({ data: { removedStudentId: 's1', students: [linked(brian)] } });
+
+    renderPage();
+    await userEvent.click(await screen.findByRole('button', { name: 'Manage Essay on sorting' }));
+    const dialog = screen.getByRole('dialog', { name: 'Manage assignment' });
+    const assignedList = await within(dialog).findByRole('list', { name: 'Currently assigned students' });
+    expect(within(assignedList).getAllByRole('listitem')).toHaveLength(2);
+
+    // Escape closes only the confirmation, not the dialog underneath; nothing is removed.
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove Amina Test from this assignment' }));
+    expect(screen.getByRole('dialog', { name: 'Remove student from assignment?' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Remove student from assignment?' })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Manage assignment' })).toBeInTheDocument();
+    expect(s.courseworkService.removeStudent).not.toHaveBeenCalled();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove Amina Test from this assignment' }));
+    const confirm = screen.getByRole('dialog', { name: 'Remove student from assignment?' });
+    expect(confirm).toHaveTextContent(/account, enrollment and results are not affected/i);
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Remove' }));
+
+    expect(s.courseworkService.removeStudent).toHaveBeenCalledWith('a1', 's1');
+    expect(await screen.findByText('Amina Test removed from the assignment.')).toBeInTheDocument();
+    expect(within(assignedList).getAllByRole('listitem')).toHaveLength(1);
+    expect(within(assignedList).queryByText('Amina Test')).not.toBeInTheDocument();
+    // She can be picked again.
+    expect(within(dialog).getByLabelText(/Amina Test/)).not.toBeChecked();
+  });
+
+  it('adds newly selected students when saving an existing assignment', async () => {
+    s.courseworkService.list.mockImplementation(() => ok([assignment], { page: 1, pageSize: 20, total: 1 }));
+    s.courseworkService.students.mockImplementation(() => ok([linked(amina)]));
+    s.courseworkService.eligible.mockImplementation(() => ok([{ ...amina, assigned: true }, brian, chidi]));
+    s.courseworkService.update.mockResolvedValue({ data: assignment });
+    s.courseworkService.addStudents.mockResolvedValue({ data: { added: 1, skipped: 0, students: [] } });
+
+    renderPage();
+    await userEvent.click(await screen.findByRole('button', { name: 'Manage Essay on sorting' }));
+    const dialog = screen.getByRole('dialog', { name: 'Manage assignment' });
+    // Already-assigned students are not offered again (no duplicates).
+    await within(dialog).findByLabelText(/Brian Sample/);
+    expect(within(dialog).queryByRole('checkbox', { name: /Amina Test/ })).not.toBeInTheDocument();
+    await userEvent.click(within(dialog).getByLabelText(/Brian Sample/));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save and add 1' }));
+    expect(s.courseworkService.update).toHaveBeenCalledWith('a1', expect.objectContaining({ title: 'Essay on sorting', maxMarks: 20 }));
+    expect(s.courseworkService.addStudents).toHaveBeenCalledWith('a1', ['s2']);
+  });
+});
+
+describe('student assignments', () => {
+  beforeEach(() => {
+    mocks.auth.user = { role: 'student', fullName: 'Amina Test' };
+  });
+
+  it('lists the assignments the API returns for the student', async () => {
+    s.studentsService.myAssignments.mockImplementation(() =>
+      ok([{ id: 'a1', title: 'Essay on sorting', course: { code: 'CSC 201', name: 'Data Structures' }, academicPeriod: period, dueAt: '2099-05-01T12:00:00.000Z', maxMarks: 20 }]),
+    );
+    renderAt('/student/assignments', '/student/assignments', <StudentAssignmentsPage />);
+    expect(await screen.findByText('Essay on sorting')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Essay on sorting/ })).toHaveAttribute('href', '/student/assignments/a1');
+  });
+
+  it('shows "not available" once the student has been removed', async () => {
+    s.studentsService.myAssignment.mockRejectedValue(new ApiError('Assignment not found.', { status: 404 }));
+    renderAt('/student/assignments/a1', '/student/assignments/:id', <StudentAssignmentDetailPage />);
+    expect(await screen.findByText('This assignment is not available')).toBeInTheDocument();
   });
 });

@@ -10,6 +10,7 @@ import * as results from '../services/resultService.js';
 import * as settings from '../services/settingsService.js';
 import * as reports from '../services/reportService.js';
 import * as audit from '../services/auditService.js';
+import * as coursework from '../services/courseworkService.js';
 import { exportCourseResults } from '../services/exportService.js';
 
 const ok = (res, data, status = 200) => res.status(status).json({ data });
@@ -54,6 +55,14 @@ export const students = {
     ok(res, await reports.studentSummary(req.db, req.user));
   }),
   statement: h(async (req, res) => ok(res, await reports.studentStatement(req.db, req.params.id))),
+  myAssignments: h(async (req, res) => {
+    if (!req.user.studentId) throw forbidden();
+    ok(res, await coursework.myAssignments(req.db, req.user, req.query));
+  }),
+  myAssignment: h(async (req, res) => {
+    if (!req.user.studentId) throw forbidden();
+    ok(res, await coursework.myAssignment(req.db, req.user, req.params.id));
+  }),
 };
 
 export const lecturers = {
@@ -108,6 +117,25 @@ export const reportHandlers = {
   overview: h(async (req, res) => ok(res, await reports.overview(req.db, req.user, req.query))),
   coursePerformance: h(async (req, res) => page(res, await reports.coursePerformance(req.db, req.user, req.query))),
   gradeDistribution: h(async (req, res) => ok(res, await reports.gradeDistribution(req.db, req.user, req.query))),
+};
+
+export const courseworkHandlers = {
+  list: h(async (req, res) => page(res, await coursework.list(req.db, req.user, req.query))),
+  get: h(async (req, res) => ok(res, await coursework.get(req.db, req.user, req.params.id))),
+  create: h(async (req, res) => ok(res, await coursework.create(req.db, req.user, req.body), 201)),
+  update: h(async (req, res) => ok(res, await coursework.update(req.db, req.user, req.params.id, req.body))),
+  remove: h(async (req, res) => {
+    await coursework.remove(req.db, req.user, req.params.id);
+    res.status(204).end();
+  }),
+  eligibleForOffering: h(async (req, res) => ok(res, await coursework.eligibleStudents(req.db, req.user, req.query))),
+  eligible: h(async (req, res) => ok(res, await coursework.eligibleForAssignment(req.db, req.user, req.params.id))),
+  students: h(async (req, res) => ok(res, await coursework.students(req.db, req.user, req.params.id))),
+  addStudents: h(async (req, res) => ok(res, await coursework.addStudents(req.db, req.user, req.params.id, req.body))),
+  setStudents: h(async (req, res) => ok(res, await coursework.setStudents(req.db, req.user, req.params.id, req.body))),
+  removeStudent: h(async (req, res) =>
+    ok(res, await coursework.removeStudent(req.db, req.user, req.params.id, req.params.studentId)),
+  ),
 };
 
 export const auditHandlers = {

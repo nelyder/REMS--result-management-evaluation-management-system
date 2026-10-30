@@ -18,6 +18,7 @@ import {
   Users,
   Library,
   Link2,
+  NotebookPen,
 } from 'lucide-react';
 
 export const navigation = {
@@ -42,6 +43,7 @@ export const navigation = {
         { to: '/admin/academic-periods', label: 'Academic periods', icon: CalendarRange },
         { to: '/admin/assignments', label: 'Course assignments', icon: Link2 },
         { to: '/admin/enrollments', label: 'Enrollments', icon: UserPlus },
+        { to: '/admin/coursework', label: 'Coursework assignments', icon: NotebookPen },
       ],
     },
     {
@@ -65,6 +67,7 @@ export const navigation = {
       section: 'Teaching',
       items: [
         { to: '/lecturer/courses', label: 'My courses', icon: BookOpen },
+        { to: '/lecturer/assignments', label: 'Assignments', icon: NotebookPen },
         { to: '/lecturer/results', label: 'Results', icon: ClipboardCheck },
         { to: '/lecturer/reports', label: 'Course performance', icon: BarChart3 },
       ],
@@ -79,6 +82,7 @@ export const navigation = {
     {
       section: 'Academics',
       items: [
+        { to: '/student/assignments', label: 'Assignments', icon: NotebookPen },
         { to: '/student/results', label: 'My results', icon: ListChecks },
         { to: '/student/performance', label: 'Performance', icon: TrendingUp },
         { to: '/student/statement', label: 'Result statement', icon: FileText },

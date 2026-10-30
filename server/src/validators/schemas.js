@@ -153,6 +153,43 @@ export const exportQuery = z
   .strict();
 export const myResultsQuery = z.object({ academicPeriodId: optionalUuid }).strict();
 
+// ---------- coursework assignments ----------
+// Course and period are fixed at creation; students are managed through /assignments/:id/students.
+const twoDecimals = (n) => Math.abs(Math.round(n * 100) - n * 100) < 1e-6;
+const maxMarks = z
+  .number({ invalid_type_error: 'Maximum marks must be a number.' })
+  .finite()
+  .gt(0, 'Maximum marks must be more than 0.')
+  .max(1000, 'Maximum marks cannot exceed 1000.')
+  .refine(twoDecimals, 'Use at most 2 decimal places.');
+const dueAt = z.string().datetime({ offset: true, message: 'Use a valid date and time.' });
+const description = z.string().trim().max(5000).nullable().optional();
+const studentIdList = z.array(uuid).max(1000, 'Select at most 1000 students at a time.');
+
+export const courseworkCreate = z
+  .object({
+    title: text(3, 150),
+    description,
+    courseId: uuid,
+    academicPeriodId: uuid,
+    dueAt,
+    maxMarks,
+    studentIds: studentIdList.default([]),
+  })
+  .strict()
+  .refine((v) => new Date(v.dueAt).getTime() > Date.now(), { path: ['dueAt'], message: 'The due date must be in the future.' });
+export const courseworkUpdate = z
+  .object({ title: text(3, 150), description, dueAt, maxMarks })
+  .partial()
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update.' });
+export const courseworkListQuery = listQuery.extend({ courseId: optionalUuid, academicPeriodId: optionalUuid });
+export const eligibleStudentsQuery = z.object({ courseId: uuid, academicPeriodId: uuid }).strict();
+export const studentIdsAdd = z.object({ studentIds: studentIdList.min(1, 'Select at least one student.') }).strict();
+export const studentIdsSet = z.object({ studentIds: studentIdList }).strict();
+export const assignmentStudentParams = z.object({ id: uuid, studentId: uuid }).strict();
+export const myAssignmentsQuery = z.object({ academicPeriodId: optionalUuid }).strict();
+
 // ---------- settings ----------
 export const evaluationSettingsBody = z
   .object({
@@ -203,6 +240,7 @@ export const auditQuery = listQuery.extend({
     .enum([
       'results', 'profiles', 'students', 'lecturers', 'courses', 'enrollments', 'course_assignments',
       'grading_scales', 'evaluation_settings', 'academic_periods', 'departments', 'programmes', 'auth',
+      'assignments', 'assignment_students',
     ])
     .optional(),
   action: z.string().regex(/^[A-Z_]{3,20}$/).optional(),

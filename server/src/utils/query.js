@@ -1,3 +1,5 @@
+import { check } from './httpError.js';
+
 /** Range for PostgREST from validated page/pageSize. */
 export function pageRange({ page = 1, pageSize = 20 }) {
   const from = (page - 1) * pageSize;
@@ -30,4 +32,17 @@ export function applySort(query, { sort, order }, sortMap, fallback) {
   const column = (sort && sortMap[sort]) || fallback.column;
   const ascending = sort && sortMap[sort] ? order !== 'desc' : fallback.ascending ?? true;
   return query.order(column, { ascending });
+}
+
+/**
+ * Reads every row of a query in pages, because PostgREST caps a single response
+ * (1000 rows by default). `build()` must return a fresh query each call.
+ */
+export async function fetchAll(build, pageSize = 1000) {
+  const rows = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data } = check(await build().range(from, from + pageSize - 1));
+    rows.push(...data);
+    if (data.length < pageSize) return rows;
+  }
 }

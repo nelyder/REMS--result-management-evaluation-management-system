@@ -30,6 +30,7 @@ export function useOptions(names) {
   const [options, setOptions] = useState(() => Object.fromEntries(names.map((n) => [n, []])));
 
   useEffect(() => {
+    if (!key) return undefined;
     let active = true;
     Promise.all(key.split(',').map((n) => loaders[n]().catch(() => []))).then((lists) => {
       if (active) setOptions(Object.fromEntries(key.split(',').map((n, i) => [n, lists[i]])));

@@ -221,3 +221,52 @@ export const mapBand = (b) => ({
   gradePoint: num(b.grade_point),
   description: b.description,
 });
+
+/** Row from the assignment_overview view (coursework assignment). */
+export const mapCoursework = (a) => ({
+  id: a.id,
+  courseId: a.course_id,
+  academicPeriodId: a.academic_period_id,
+  title: a.title,
+  description: a.description ?? null,
+  dueAt: a.due_at,
+  maxMarks: num(a.max_marks),
+  course: { id: a.course_id, code: a.course_code, name: a.course_name },
+  academicPeriod: periodFromRow(a),
+  createdBy: a.created_by ? { id: a.created_by, fullName: a.created_by_name ?? null } : null,
+  assignedCount: a.assigned_count ?? 0,
+  createdAt: a.created_at,
+  updatedAt: a.updated_at,
+});
+
+/** Row from the assignment_student_details view. */
+export const mapAssignedStudent = (x) => ({
+  id: x.id,
+  studentId: x.student_id,
+  assignedAt: x.assigned_at,
+  status: x.assignment_status,
+  student: {
+    id: x.student_id,
+    fullName: x.full_name,
+    registrationNumber: x.registration_number,
+    email: x.email,
+    programmeCode: x.programme_code,
+    yearOfStudy: x.year_of_study,
+    accountStatus: x.account_status,
+  },
+});
+
+/** Row from enrollment_details, as a candidate for an assignment. */
+export const mapEligibleStudent = (e, assigned) => ({
+  studentId: e.student_id,
+  enrollmentId: e.id,
+  enrollmentStatus: e.enrollment_status,
+  assigned,
+  student: {
+    id: e.student_id,
+    fullName: e.full_name,
+    registrationNumber: e.registration_number,
+    programmeCode: e.programme_code,
+    yearOfStudy: e.year_of_study,
+  },
+});
