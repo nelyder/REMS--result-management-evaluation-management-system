@@ -133,6 +133,21 @@ describe('MarksEntryPage', () => {
     expect(s.resultsService.save).toHaveBeenCalledWith({ enrollmentId: 'e1', courseworkMark: 30, examinationMark: 45 });
   });
 
+  it('loads every page of a large class and hides only withdrawn students', async () => {
+    const meta = { total: 101, course: { code: 'CSC 101', name: 'Introduction to Programming', passMark: null }, academicPeriod: period };
+    const first = Array.from({ length: 100 }, (_, i) => ({ ...enrollment(`e${i}`, `Student ${i}`, `REG/2025/${String(i).padStart(4, '0')}`), enrollmentStatus: 'enrolled' }));
+    s.enrollmentsService.forCourse.mockImplementation((_course, params) =>
+      params.page === 1
+        ? ok([...first.slice(0, 98), { ...first[98], enrollmentStatus: 'completed' }, { ...first[99], enrollmentStatus: 'withdrawn' }], meta)
+        : ok([{ ...enrollment('e100', 'Last Student', 'REG/2025/0100'), enrollmentStatus: 'enrolled' }], meta),
+    );
+    renderMarks();
+    expect(await screen.findByText('Last Student')).toBeInTheDocument();
+    expect(screen.getByText('Student 98')).toBeInTheDocument(); // completed enrollments keep their results visible
+    expect(screen.queryByText('Student 99')).not.toBeInTheDocument(); // withdrawn
+    expect(s.enrollmentsService.forCourse).toHaveBeenCalledWith('c1', expect.objectContaining({ page: 2, pageSize: 100 }));
+  });
+
   it('rejects a mark above the configured maximum without calling the API', async () => {
     renderMarks();
     const r = await row('Amina Test');

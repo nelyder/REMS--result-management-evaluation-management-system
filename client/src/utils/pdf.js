@@ -74,6 +74,11 @@ export function downloadStatementPdf({ profile, results, summary }) {
 
   if (summary?.cumulative) {
     const c = summary.cumulative;
+    // Keep the two summary lines above the footer.
+    if (y + 15 > doc.internal.pageSize.getHeight() - 48) {
+      doc.addPage();
+      y = 56;
+    }
     doc.setFont('helvetica', 'bold');
     doc.text('Cumulative summary', 40, y);
     doc.setFont('helvetica', 'normal');

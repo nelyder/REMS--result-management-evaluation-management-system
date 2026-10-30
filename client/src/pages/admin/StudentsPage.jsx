@@ -6,7 +6,7 @@ import { StatusBadge } from '../../components/ui/index.js';
 import { studentsService } from '../../services/index.js';
 import { useOptions } from '../../hooks/useOptions.js';
 
-const YEARS = [1, 2, 3, 4, 5, 6].map((y) => ({ value: String(y), label: `Year ${y}` }));
+const YEARS = [1, 2, 3, 4, 5, 6, 7, 8].map((y) => ({ value: String(y), label: `Year ${y}` }));
 
 export default function StudentsPage() {
   const { programmes } = useOptions(['programmes']);

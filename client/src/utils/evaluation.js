@@ -13,7 +13,8 @@ export function validateMark(raw, max, label) {
   if (Number.isNaN(n)) return `${label} must be a number`;
   if (n < 0) return `${label} cannot be negative`;
   if (n > max) return `${label} cannot exceed ${max}`;
-  if (Math.round(n * 100) !== n * 100) return `${label} allows at most 2 decimal places`;
+  // Tolerance: 1.1 * 100 is 110.00000000000001 in floating point.
+  if (Math.abs(Math.round(n * 100) - n * 100) > 1e-6) return `${label} allows at most 2 decimal places`;
   return null;
 }
 

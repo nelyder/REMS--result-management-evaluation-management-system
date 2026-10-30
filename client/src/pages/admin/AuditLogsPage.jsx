@@ -59,7 +59,7 @@ export default function AuditLogsPage() {
       <PageHeader title="Audit logs" description="Tamper-protected record of important changes. Entries are written by the database and cannot be edited." />
       <Card bodyClassName="">
         <div className="grid gap-3 border-b border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-5">
-          <SearchInput value={q.search} onChange={q.setSearch} placeholder="Search actor or entity id…" className="lg:col-span-1" />
+          <SearchInput value={q.search} onChange={q.setSearch} placeholder="Search by record id…" className="lg:col-span-1" />
           <Select aria-label="Entity type" value={q.filters.entityType ?? ''} onChange={(e) => q.setFilter('entityType', e.target.value)} options={ENTITY_TYPES} placeholder="All entities" />
           <Select aria-label="Action" value={q.filters.action ?? ''} onChange={(e) => q.setFilter('action', e.target.value)} options={ACTIONS} placeholder="All actions" />
           <Input aria-label="From date" type="date" value={q.filters.from ?? ''} onChange={(e) => q.setFilter('from', e.target.value)} />

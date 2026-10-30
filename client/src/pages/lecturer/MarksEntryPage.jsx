@@ -18,6 +18,7 @@ import {
 } from '../../components/ui/index.js';
 import { ResultHistoryModal } from '../../components/ResultHistoryModal.jsx';
 import { enrollmentsService, resultsService, settingsService } from '../../services/index.js';
+import { fetchAllPages } from '../../services/api.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useToast } from '../../contexts/ToastContext.jsx';
 import { previewResult } from '../../utils/evaluation.js';
@@ -54,11 +55,12 @@ export default function MarksEntryPage() {
     setError(null);
     try {
       const [enr, ev, gs] = await Promise.all([
-        enrollmentsService.forCourse(courseId, { academicPeriodId: periodId, pageSize: 100, enrollmentStatus: 'enrolled' }),
+        fetchAllPages((p) => enrollmentsService.forCourse(courseId, p), { academicPeriodId: periodId }),
         settingsService.getEvaluation(),
         settingsService.getGradingScales({ academicPeriodId: periodId }),
       ]);
-      setRows(enr.data);
+      // Completed enrollments keep their results; only withdrawn students are hidden.
+      setRows(enr.data.filter((r) => r.enrollmentStatus !== 'withdrawn'));
       setMeta(enr.meta || {});
       setSettings(ev.data);
       setScales(gs.data.bands);
@@ -137,7 +139,9 @@ export default function MarksEntryPage() {
       applySaved(row.id, data);
       return true;
     } catch (err) {
-      if (err.status === 409) {
+      if (err.status === 409 && !row.result) {
+        toast.error(`${row.student.registrationNumber}: someone else has already saved a result for this student. Reload the page to see it.`);
+      } else if (err.status === 409) {
         toast.error(`${row.student.registrationNumber}: this result was changed by someone else. Latest values have been loaded.`);
         try {
           const { data } = await resultsService.get(row.result.id);

@@ -54,6 +54,24 @@ api.interceptors.response.use(
   },
 );
 
+/**
+ * Loads every page of a paginated list endpoint (the API caps pageSize at 100).
+ * `fetchPage(params)` must resolve to `{ data, meta: { total } }`; returns `{ data, meta }`
+ * with the first page's meta and all rows.
+ */
+export async function fetchAllPages(fetchPage, params = {}, { maxPages = 100 } = {}) {
+  const pageSize = 100;
+  const first = await fetchPage({ ...params, page: 1, pageSize });
+  const rows = [...first.data];
+  const total = first.meta?.total ?? rows.length;
+  for (let page = 2; rows.length < total && page <= maxPages; page++) {
+    const next = await fetchPage({ ...params, page, pageSize });
+    if (!next.data.length) break;
+    rows.push(...next.data);
+  }
+  return { data: rows, meta: first.meta };
+}
+
 /** Returns the `{ data, meta }` response body. */
 const unwrap = (res) => res.data;
 

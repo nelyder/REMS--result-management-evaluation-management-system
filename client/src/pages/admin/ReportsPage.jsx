@@ -4,6 +4,8 @@ import { Pagination } from '../../components/Pagination.jsx';
 import { GradeDistribution } from '../../components/GradeDistribution.jsx';
 import { Button, Card, PageHeader, SearchInput, Select, StatCard, Spinner, ErrorState } from '../../components/ui/index.js';
 import { reportsService } from '../../services/index.js';
+import { fetchAllPages } from '../../services/api.js';
+import { useToast } from '../../contexts/ToastContext.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { useListQuery } from '../../hooks/useListQuery.js';
 import { useOptions } from '../../hooks/useOptions.js';
@@ -29,6 +31,7 @@ const columnsCsv = [
 
 export default function ReportsPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const { periods } = useOptions(['periods']);
   const q = useListQuery({ pageSize: 20 });
   const periodId = q.filters.academicPeriodId || '';
@@ -40,8 +43,12 @@ export default function ReportsPage() {
   const o = overview.data || {};
 
   const exportCsv = async () => {
-    const all = await reportsService.coursePerformance({ ...q.params, page: 1, pageSize: 100 });
-    downloadCsv(`course-performance${periodId ? `-${periodId.slice(0, 8)}` : ''}.csv`, all.data, columnsCsv);
+    try {
+      const all = await fetchAllPages(reportsService.coursePerformance, q.params);
+      downloadCsv(`course-performance${periodId ? `-${periodId.slice(0, 8)}` : ''}.csv`, all.data, columnsCsv);
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   return (

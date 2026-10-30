@@ -27,6 +27,10 @@ describe('previewResult', () => {
 });
 
 describe('validateMark', () => {
+  it('accepts 2-decimal marks that are inexact in floating point', () => {
+    for (const v of ['1.1', '0.29', '0.07', '12.07', '33.33']) expect(validateMark(v, 40, 'Coursework')).toBeNull();
+    expect(validateMark('1.005', 40, 'Coursework')).toMatch(/2 decimal/);
+  });
   it('rejects negatives and more than 2 decimals', () => {
     expect(validateMark('-1', 40, 'CW')).toMatch(/negative/);
     expect(validateMark('10.123', 40, 'CW')).toMatch(/2 decimal/);

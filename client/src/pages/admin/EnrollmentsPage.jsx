@@ -140,7 +140,7 @@ function EnrollModal({ open, onClose, courseId, periodId, onDone }) {
             label="Year of study"
             value={cohort.yearOfStudy}
             onChange={(e) => setCohort((c) => ({ ...c, yearOfStudy: e.target.value }))}
-            options={[1, 2, 3, 4, 5, 6].map((y) => ({ value: String(y), label: `Year ${y}` }))}
+            options={[1, 2, 3, 4, 5, 6, 7, 8].map((y) => ({ value: String(y), label: `Year ${y}` }))}
             placeholder="Select year"
           />
           <p className="text-xs text-slate-500 sm:col-span-2">
