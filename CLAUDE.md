@@ -30,12 +30,12 @@ result-management-system/
   package.json            # npm workspaces: client, server
   client/                 # React SPA
     src/
-      components/         # reusable UI (ui/ primitives, DataTable, Modal, ConfirmDialog, Toasts...)
+      components/         # reusable UI (ui/ primitives, DataTable, Modal, ConfirmDialog, ThemeToggle, AssignmentDialog...)
       layouts/            # AppLayout (sidebar + mobile nav), AuthLayout
       pages/              # public/, admin/, lecturer/, student/
       hooks/              # useApi, usePagination, useDebounce...
       services/           # api.js (axios instance), supabase.js (anon client, auth only), resource services
-      contexts/           # AuthContext, ToastContext
+      contexts/           # AuthContext, ToastContext, ThemeContext
       utils/              # formatting, evaluation preview (display only), pdf, csv helpers
       App.jsx, main.jsx
     tests/
@@ -106,6 +106,12 @@ result-management-system/
   students). `submitted` locks lecturer edits until an admin publishes or returns it to draft.
 - Students see only rows with `publication_status IN ('published','corrected')` for their
   own enrollments.
+- **Coursework assignments** (`assignments` + junction `assignment_students`, unique per pair)
+  belong to a course offering (course + period, immutable). Admins and the lecturers assigned to
+  that offering manage them; only students with a non-withdrawn enrollment on the offering can be
+  assigned (trigger). Students see only assignments they are linked to (RLS). Removing a student
+  deletes only the junction row. Not to be confused with `course_assignments` (lecturer ↔ course);
+  in code the module is called *coursework* (`courseworkService`, `CourseworkPage`).
 - Lecturers may create/edit **draft** results only for courses assigned to them in that
   academic period. Editing a published result ("correction") requires a `reason`, is
   allowed for the assigned lecturer only if `evaluation_settings.lecturer_can_correct` is
@@ -132,6 +138,10 @@ Pagination query: `page` (1-based), `pageSize` (max 100), `search`, `sort`, `ord
 | GET/POST | `/courses`; PATCH `/courses/:id` | admin (GET: admin/lecturer) |
 | GET/POST | `/academic-periods`; PATCH `/academic-periods/:id` | admin (GET: any) |
 | GET/POST | `/course-assignments`; DELETE `/course-assignments/:id` | admin |
+| GET/POST | `/assignments`; GET/PATCH/DELETE `/assignments/:id` (coursework) | admin, assigned lecturer |
+| GET | `/assignments/eligible-students?courseId&academicPeriodId`, `/assignments/:id/eligible-students`, `/assignments/:id/students` | admin, assigned lecturer |
+| POST/PUT | `/assignments/:id/students` (`{ studentIds }` add / replace); DELETE `/assignments/:id/students/:studentId` | admin, assigned lecturer |
+| GET | `/students/me/assignments`, `/students/me/assignments/:id` | student (own only) |
 | GET | `/lecturer/assignments` | lecturer (own) |
 | GET | `/courses/:courseId/enrollments` (`?academicPeriodId`) | admin, assigned lecturer |
 | POST | `/enrollments`, `/enrollments/bulk`; PATCH `/enrollments/:id` | admin |
@@ -186,7 +196,9 @@ supabase test db            # pgTAP RLS tests
   Supabase/Postgres error messages to clients (log them server-side).
 - Whitelist fields in services (no `...req.body` into inserts/updates) — prevents mass assignment.
 - Client: pages compose components; data access only via `src/services/*`. Tailwind utility
-  classes with the design tokens in `src/index.css` (blue/white/slate palette).
+  classes with the design tokens in `src/index.css` (Lavender brand + slate). Dark mode is a token
+  swap under `.dark`: use `bg-surface` (not `bg-white`) for panels and `text-on-brand` (not
+  `text-white`) on `bg-brand-*`, and let slate/status classes adapt; add `dark:` only when needed.
 - Accessibility: every input has a label, tables have headers/captions, dialogs trap focus and
   close on Escape, visible focus rings, color is never the only status indicator.
 - Tests: business rules and permissions must have tests. Use fictional data only
@@ -197,8 +209,14 @@ supabase test db            # pgTAP RLS tests
 
 All stages are implemented: frontend, backend, migrations/RLS/triggers, reports & exports,
 tests and README. Migrations are applied to the dev project; server, client and live tests,
-lint and the production build pass. `supabase/tests/rls.test.sql` (pgTAP) has not been run: it
-needs the Supabase CLI + Docker.
+lint and the production build pass. `supabase/tests/*.test.sql` (pgTAP) have not been run: they
+need the Supabase CLI + Docker.
+
+Coursework assignments, the Lavender/dark theme and the review fixes are described in
+`docs/development-plan.md`. Migrations `20260301000000_fix_withdrawn_counts.sql` and
+`20260301000100_assignments.sql` are **not yet applied** to the dev project; until they are,
+the assignment endpoints return errors and `tests/live/assignments.live.test.js` stops in its
+first check.
 
 - First admin: `npm run create-admin -w server -- --email ... --name "..."` (no API path can
   create admins). Demo data: `npm run seed:demo -w server` (dev only, fictional).

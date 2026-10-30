@@ -29,9 +29,9 @@ students view and download only their own **published** results.
 
 | Role | Can do |
 |---|---|
-| **Administrator** | Dashboard (students, lecturers, courses, published results, pass rate); create/edit/deactivate students and lecturers; manage departments, programmes, courses, academic periods; assign lecturers to courses; enroll students individually or by cohort; configure mark scheme, pass mark, workflow and grading scales; publish / return results; view system-wide results, reports, grade distributions; view and download any student's result statement (published results only); view audit logs; export result sheets. |
-| **Lecturer** | Dashboard of assigned courses and progress; class lists; fast keyboard marks entry with live preview; save drafts; submit or publish (depending on configuration); correct published results with a reason (if permitted); view result history; search/filter results; export CSV/Excel; course performance. **Only for courses assigned to them.** |
-| **Student** | Dashboard; own published results filtered by year/semester; performance summary (credit-weighted average, GPA/CGPA); printable statement and PDF download; profile. **Read-only, own published results only.** |
+| **Administrator** | Dashboard (students, lecturers, courses, published results, pass rate); create/edit/deactivate students and lecturers; manage departments, programmes, courses, academic periods; assign lecturers to courses; enroll students individually or by cohort; configure mark scheme, pass mark, workflow and grading scales; publish / return results; view and manage every coursework assignment; view system-wide results, reports, grade distributions; view and download any student's result statement (published results only); view audit logs; export result sheets. |
+| **Lecturer** | Dashboard of assigned courses and progress; class lists; fast keyboard marks entry with live preview; save drafts; submit or publish (depending on configuration); correct published results with a reason (if permitted); view result history; search/filter results; export CSV/Excel; course performance; create coursework assignments and choose exactly which enrolled students can see each one (add, remove with confirmation). **Only for courses assigned to them.** |
+| **Student** | Dashboard; assignments assigned to them (list, details, upcoming on the dashboard); own published results filtered by year/semester; performance summary (credit-weighted average, GPA/CGPA); printable statement and PDF download; profile. **Read-only, own published results only.** |
 
 ### Result workflow
 
@@ -52,6 +52,9 @@ draft ──publish (admin, or lecturer if "Lecturers may publish" is on)──�
 
 **All roles** can reset a forgotten password by email (*Forgot password?* on the sign-in page) and
 change their password on the profile page; changing it requires the current password.
+
+The interface uses a **Lavender** theme with **light, dark and system** modes (toggle in the sidebar,
+mobile header and sign-in pages; the choice is remembered per browser). Printing always uses the light palette.
 
 ## Technology stack
 
@@ -111,10 +114,14 @@ result-management-system/
 | `results` | One per enrollment. `numeric(5,2)` marks; `total_mark` is a **generated column**; checks ensure incomplete ⇔ missing component ⇔ no grade, only complete results leave draft, `published_at` consistent; `version` for optimistic locking. |
 | `grading_scales` | Bands per period (NULL = default). Exclusion constraint prevents overlapping bands. |
 | `evaluation_settings` | Single row: coursework/exam maxima (must sum to 100), default pass mark, workflow switches. |
+| `assignments` | Coursework assignment for a course offering (course + period, fixed after creation): `title`, `description`, `due_at`, `max_marks` (0–1000, 2 dp), `created_by`. |
+| `assignment_students` | Junction assignment ↔ student, **unique (assignment_id, student_id)**; `assigned_at`, `assigned_by`, `assignment_status`. A trigger only allows students with a non-withdrawn enrollment on the offering. Removing a row never touches accounts, enrollments or results. |
 | `audit_logs` | Append-only; written by `SECURITY DEFINER` triggers with the acting user. |
 
 Views (`security_invoker`, so the caller's RLS applies): `student_directory`, `lecturer_directory`,
-`enrollment_details`, `result_details`, `assignment_details`, `course_result_summary`, `grade_counts`.
+`enrollment_details`, `result_details`, `assignment_details`, `course_result_summary`, `grade_counts`,
+`assignment_overview`, `assignment_student_details`. Progress and report views count only
+non-withdrawn enrollments.
 
 ## Installation
 
@@ -306,6 +313,12 @@ Coverage:
   rejection of client-supplied totals, grades or authors (mass assignment), optimistic-lock
   conflicts, publication, submission, return and correction rules, admin safeguards, and errors that
   leak no internals.
+* **Assignment tests:** API tests (`server/tests/coursework.test.js`) for creating with selected
+  students, validation, duplicate prevention, add/remove/replace, lecturer permissions on other
+  courses, and student visibility before and after removal; pgTAP (`supabase/tests/assignments.test.sql`)
+  and live tests (`server/tests/live/assignments.live.test.js`) check the same rules in Postgres,
+  including through the Data API directly; client tests cover the dialog (search, select-all,
+  selected list, confirmation before removal).
 * **Database tests (`supabase/tests/rls.test.sql`):** these run against real Postgres with separate
   admin, lecturer and student identities. They cover RLS visibility, write prevention, trigger
   re-grading, versioning, audit record creation, mark range enforcement, publication and correction
