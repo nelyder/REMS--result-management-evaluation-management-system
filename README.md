@@ -323,6 +323,9 @@ Coverage:
   admin, lecturer and student identities. They cover RLS visibility, write prevention, trigger
   re-grading, versioning, audit record creation, mark range enforcement, publication and correction
   rules, append-only audit logs and immutable roles.
+* **Course deletion (`supabase/tests/delete_course.test.sql`):** `delete_course` removes a course
+  with its enrollments only when no marks or coursework exist, is admin-only, and audit-logs each
+  deleted row; API and client tests cover the endpoint and the confirmation dialog.
 * **Live database tests (`server/tests/live/`):** these call the Supabase Data API directly as
   anonymous, student, lecturer and admin users, bypassing Express the way an attacker with the public
   key could, and they also call the API in-process. They cover RLS visibility and write prevention,

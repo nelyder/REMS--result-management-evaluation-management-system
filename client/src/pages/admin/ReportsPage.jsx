@@ -41,6 +41,14 @@ export default function ReportsPage() {
   const perf = useApi(() => reportsService.coursePerformance(q.params), [JSON.stringify(q.params)]);
 
   const o = overview.data || {};
+  const resultsLink = (resultStatus) => {
+    const p = new URLSearchParams();
+    if (periodId) p.set('academicPeriodId', periodId);
+    if (resultStatus) p.set('resultStatus', resultStatus);
+    const qs = p.toString();
+    return `/${user.role}/results${qs ? `?${qs}` : ''}`;
+  };
+  const scrollToCourses = () => document.getElementById('course-performance')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   const exportCsv = async () => {
     try {
@@ -76,14 +84,14 @@ export default function ReportsPage() {
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Courses" value={o.courses} icon={BookOpen} loading={overview.loading} />
-        <StatCard label="Results evaluated" value={o.evaluatedResults} icon={GraduationCap} tone="violet" loading={overview.loading} />
-        <StatCard label="Passed" value={o.passCount} icon={CheckCircle2} tone="green" loading={overview.loading} hint={o.passRate != null ? `${formatPercent(o.passRate)} pass rate` : undefined} />
-        <StatCard label="Failed" value={o.failCount} icon={XCircle} tone="red" loading={overview.loading} />
+        <StatCard label="Courses" value={o.courses} icon={BookOpen} onClick={scrollToCourses} actionLabel="See course breakdown" loading={overview.loading} />
+        <StatCard label="Results evaluated" value={o.evaluatedResults} icon={GraduationCap} tone="violet" to={resultsLink()} actionLabel="View results" loading={overview.loading} />
+        <StatCard label="Passed" value={o.passCount} icon={CheckCircle2} tone="green" to={resultsLink('pass')} actionLabel="View passed" loading={overview.loading} hint={o.passRate != null ? `${formatPercent(o.passRate)} pass rate` : undefined} />
+        <StatCard label="Failed" value={o.failCount} icon={XCircle} tone="red" to={resultsLink('fail')} actionLabel="View failed" loading={overview.loading} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <Card title="Course performance" className="xl:col-span-2" bodyClassName="">
+        <Card id="course-performance" title="Course performance" className="xl:col-span-2" bodyClassName="">
           <div className="border-b border-slate-200 p-4">
             <SearchInput value={q.search} onChange={q.setSearch} placeholder="Search courses…" className="sm:max-w-xs" />
           </div>

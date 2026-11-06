@@ -135,7 +135,7 @@ Pagination query: `page` (1-based), `pageSize` (max 100), `search`, `sort`, `ord
 | GET/POST | `/lecturers`; PATCH `/lecturers/:id` | admin |
 | GET/POST | `/departments`; PATCH/DELETE `/departments/:id` | admin (GET: any staff) |
 | GET/POST | `/programmes`; PATCH/DELETE `/programmes/:id` | admin |
-| GET/POST | `/courses`; PATCH `/courses/:id` | admin (GET: admin/lecturer) |
+| GET/POST | `/courses`; PATCH/DELETE `/courses/:id` (DELETE via `delete_course` rpc: also removes enrollments; 422 if any marks or coursework exist) | admin (GET: admin/lecturer) |
 | GET/POST | `/academic-periods`; PATCH `/academic-periods/:id` | admin (GET: any) |
 | GET/POST | `/course-assignments`; DELETE `/course-assignments/:id` | admin |
 | GET/POST | `/assignments`; GET/PATCH/DELETE `/assignments/:id` (coursework) | admin, assigned lecturer |
@@ -216,7 +216,8 @@ Coursework assignments, the Lavender/dark theme and the review fixes are describ
 `docs/development-plan.md`. Migrations `20260301000000_fix_withdrawn_counts.sql` and
 `20260301000100_assignments.sql` are **not yet applied** to the dev project; until they are,
 the assignment endpoints return errors and `tests/live/assignments.live.test.js` stops in its
-first check.
+first check. `20260301000200_delete_course.sql` (course deletion) depends on the assignments
+migration and is not applied either; until it is, deleting a course returns a 500.
 
 - First admin: `npm run create-admin -w server -- --email ... --name "..."` (no API path can
   create admins). Demo data: `npm run seed:demo -w server` (dev only, fictional).

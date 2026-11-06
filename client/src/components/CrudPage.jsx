@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { DataTable } from './DataTable.jsx';
 import { Pagination } from './Pagination.jsx';
@@ -74,6 +75,7 @@ export function CrudPage({
   filters = [],
   searchPlaceholder,
   canDelete = false,
+  deleteMessage,
   rowActions,
   defaultSort,
   canEdit = true,
@@ -82,7 +84,12 @@ export function CrudPage({
   const q = useListQuery({ sort: defaultSort });
   const list = useApi(() => service.list(q.params), [JSON.stringify(q.params)]);
 
-  const [form, setForm] = useState(null); // { mode, id, values }
+  // `?new=1` (e.g. the dashboard's quick actions) opens the create form straight away.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [form, setForm] = useState(() => (searchParams.has('new') ? { mode: 'create', values: { ...initialValues } } : null)); // { mode, id, values }
+  useEffect(() => {
+    if (searchParams.has('new')) setSearchParams((p) => { p.delete('new'); return p; }, { replace: true });
+  }, [searchParams, setSearchParams]);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
@@ -234,7 +241,11 @@ export function CrudPage({
         loading={deleting}
         title={`Delete ${entityName}?`}
         confirmLabel="Delete"
-        message={`This permanently removes the ${entityName}. Records that depend on it will block deletion.`}
+        message={
+          typeof deleteMessage === 'function'
+            ? deleteMessage(toDelete)
+            : deleteMessage || `This permanently removes the ${entityName}. Records that depend on it will block deletion.`
+        }
       />
     </>
   );

@@ -20,6 +20,17 @@
   --color-canvas: #f8f7fc;
   --color-surface: #ffffff;
   --color-on-brand: #ffffff; /* text on bg-brand-700/800 */
+  /* Pastel KPI tile fills (StatCard). Text on them stays slate-700/900. */
+  --color-tile-lavender: #e6ddfc;
+  --color-tile-pink: #fbd3ee;
+  --color-tile-amber: #fde4a6;
+  --color-tile-sky: #d3e5fd;
+  --color-tile-mint: #cdf1df;
+  --color-tile-rose: #fdd8d8;
+  /* Donut series (validated for colour-vision deficiency on the light surface). */
+  --color-series-1: #7a54d8;
+  --color-series-2: #eda100;
+  --color-series-3: #e87ba4;
 }
 
 /*
@@ -33,6 +44,16 @@
     --color-canvas: #12101c;
     --color-surface: #1b1829;
     --color-on-brand: #1a1530;
+
+    --color-tile-lavender: #2f2654;
+    --color-tile-pink: #3b1f3a;
+    --color-tile-amber: #392d12;
+    --color-tile-sky: #142f49;
+    --color-tile-mint: #123226;
+    --color-tile-rose: #3c1c20;
+    --color-series-1: #8a70dc;
+    --color-series-2: #c98500;
+    --color-series-3: #d55181;
 
     --color-slate-50: #221e33;
     --color-slate-100: #2a263d;

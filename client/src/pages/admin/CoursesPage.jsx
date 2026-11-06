@@ -11,6 +11,11 @@ export default function CoursesPage() {
       entityName="course"
       service={coursesService}
       defaultSort={{ key: 'code', order: 'asc' }}
+      canDelete
+      deleteMessage={(r) =>
+        `This permanently removes ${r ? `${r.code} — ${r.name}` : 'the course'}, its lecturer assignments and any student enrollments on it. ` +
+        'It is refused if marks have been entered or coursework has been set, so no results are lost.'
+      }
       filters={[{ name: 'departmentId', label: 'Departments', options: departments }]}
       columns={[
         { key: 'code', header: 'Code', sortable: true, className: 'font-mono text-xs' },

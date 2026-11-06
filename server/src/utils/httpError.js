@@ -21,13 +21,16 @@ export const unprocessable = (message, details) => new HttpError(422, 'UNPROCESS
  * internals. Only messages we raise ourselves in SQL (P0001 / 23514 from our
  * triggers) are passed through to the client.
  */
-export function fromDbError(error, { conflictMessage = 'This record conflicts with an existing one.' } = {}) {
+export function fromDbError(
+  error,
+  { conflictMessage = 'This record conflicts with an existing one.', referencedMessage = 'This record is referenced by, or refers to, other records.' } = {},
+) {
   const code = error?.code;
   switch (code) {
     case '23505':
       return conflict(conflictMessage);
     case '23503':
-      return conflict('This record is referenced by, or refers to, other records.');
+      return conflict(referencedMessage);
     case '23P01':
       return unprocessable('Values overlap with an existing record.');
     case '23514':

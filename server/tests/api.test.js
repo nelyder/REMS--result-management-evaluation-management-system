@@ -505,6 +505,48 @@ describe('admin operations', () => {
   });
 });
 
+describe('course deletion', () => {
+  it('deletes a course and its unmarked enrollments in one database call', async () => {
+    state.userDb = createFakeDb({ 'rpc:delete_course': () => ({ data: { enrollments: 3, emptyResults: 1 } }) });
+    await request(app).delete(`/api/courses/${ids.otherCourse}`).set(as('admin-token')).expect(204);
+    expect(state.userDb.rpcCalls).toEqual([{ name: 'delete_course', args: { p_course_id: ids.otherCourse } }]);
+    // No piecemeal deletes from the API: the function does it atomically.
+    expect(state.userDb.calls.some((c) => c.op === 'delete')).toBe(false);
+  });
+
+  it('passes on the reason when marks have been entered (422)', async () => {
+    const message = 'This course cannot be deleted because marks have been entered for 2 student(s). Courses with marks are kept as academic records.';
+    state.userDb = createFakeDb({ 'rpc:delete_course': () => ({ error: { code: 'P0001', message } }) });
+    const res = await request(app).delete(`/api/courses/${ids.assignedCourse}`).set(as('admin-token')).expect(422);
+    expect(res.body.error.message).toBe(message);
+  });
+
+  it('returns 404 for a course that does not exist', async () => {
+    state.userDb = createFakeDb({ 'rpc:delete_course': () => ({ error: { code: 'P0002', message: 'Course not found' } }) });
+    await request(app).delete(`/api/courses/${ids.otherCourse}`).set(as('admin-token')).expect(404);
+  });
+
+  it.each(['lecturer-token', 'student-token'])('forbids %s from deleting courses', async (token) => {
+    await request(app).delete(`/api/courses/${ids.assignedCourse}`).set(as(token)).expect(403);
+    expect(state.userDb.rpcCalls).toEqual([]);
+  });
+});
+
+describe('reports overview', () => {
+  it('splits enrolled students into published, ready to publish and incomplete', async () => {
+    state.userDb = createFakeDb({
+      course_result_summary: () => ({
+        data: [
+          { enrolled: 10, published: 6, ready_to_publish: 3, incomplete: 1, pass_count: 7, fail_count: 2 },
+          { enrolled: 5, published: 0, ready_to_publish: 2, incomplete: 3, pass_count: 1, fail_count: 1 },
+        ],
+      }),
+    });
+    const res = await request(app).get('/api/reports/overview').set(as('admin-token')).expect(200);
+    expect(res.body.data).toMatchObject({ publishedResults: 6, readyToPublish: 5, incompleteResults: 4, passCount: 8, failCount: 3 });
+  });
+});
+
 describe('error handling', () => {
   it('returns 404 JSON for unknown endpoints', async () => {
     const res = await request(app).get('/api/nope').set(as('admin-token')).expect(404);

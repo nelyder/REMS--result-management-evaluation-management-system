@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint src"
+    "lint": "eslint src tests"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",

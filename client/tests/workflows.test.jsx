@@ -20,8 +20,8 @@ const mocks = vi.hoisted(() => {
     services: {
       enrollmentsService: { forCourse: fn() },
       settingsService: { getEvaluation: fn(), getGradingScales: fn() },
-      resultsService: { save: fn(), update: fn(), get: fn(), publishCourse: fn(), submitCourse: fn(), exportCourse: fn() },
-      studentsService: { list: fn(), create: fn(), update: fn(), statement: fn(), myAssignments: fn(), myAssignment: fn() },
+      resultsService: { list: fn(), save: fn(), update: fn(), get: fn(), publishCourse: fn(), submitCourse: fn(), exportCourse: fn() },
+      studentsService: { list: fn(), create: fn(), update: fn(), statement: fn(), mySummary: fn(), myResults: fn(), myAssignments: fn(), myAssignment: fn() },
       assignmentsService: { mine: fn() },
       courseworkService: {
         list: fn(), create: fn(), update: fn(), remove: fn(), eligibleForOffering: fn(), eligible: fn(),
@@ -29,7 +29,7 @@ const mocks = vi.hoisted(() => {
       },
       programmesService: { list: fn() },
       departmentsService: { list: fn() },
-      coursesService: { list: fn() },
+      coursesService: { list: fn(), remove: fn() },
       lecturersService: { list: fn() },
       periodsService: { list: fn() },
       reportsService: { overview: fn(), coursePerformance: fn(), gradeDistribution: fn() },
@@ -55,7 +55,10 @@ const { ThemeProvider } = await import('../src/contexts/ThemeContext.jsx');
 const { ApiError } = await import('../src/services/api.js');
 const { default: MarksEntryPage } = await import('../src/pages/lecturer/MarksEntryPage.jsx');
 const { default: StudentsPage } = await import('../src/pages/admin/StudentsPage.jsx');
+const { default: CoursesPage } = await import('../src/pages/admin/CoursesPage.jsx');
 const { default: AdminDashboard } = await import('../src/pages/admin/AdminDashboard.jsx');
+const { default: LecturerDashboard } = await import('../src/pages/lecturer/LecturerDashboard.jsx');
+const { default: StudentDashboard } = await import('../src/pages/student/StudentDashboard.jsx');
 const { default: StudentStatementPage } = await import('../src/pages/admin/StudentStatementPage.jsx');
 const { default: ForgotPasswordPage } = await import('../src/pages/public/ForgotPasswordPage.jsx');
 const { default: ResetPasswordPage } = await import('../src/pages/public/ResetPasswordPage.jsx');
@@ -73,7 +76,7 @@ function renderAt(path, routePath, element, extraRoutes = null) {
   return render(
     <ThemeProvider>
       <ToastProvider>
-        <MemoryRouter initialEntries={[path]}>
+        <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path={routePath} element={element} />
             {extraRoutes}
@@ -207,12 +210,47 @@ describe('MarksEntryPage', () => {
 });
 
 // ---------------------------------------------------------------- admin forms
+describe('CoursesPage deletion', () => {
+  const course = { id: 'c9', code: 'CSC 999', name: 'Mistaken Course', creditUnits: 3, departmentId: 'd1', department: { code: 'CS' }, passMark: null };
+  beforeEach(() => {
+    mocks.auth.user = { role: 'admin', fullName: 'Ada Admin' };
+    s.coursesService.list.mockImplementation(() => ok([course], { page: 1, pageSize: 20, total: 1 }));
+    s.departmentsService.list.mockImplementation(() => ok([], { page: 1, pageSize: 100, total: 0 }));
+  });
+
+  it('confirms with the course name, then deletes it', async () => {
+    s.coursesService.remove.mockResolvedValue({ data: null });
+    renderAt('/admin/courses', '/admin/courses', <CoursesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete course' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('CSC 999 — Mistaken Course');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+    expect(s.coursesService.remove).toHaveBeenCalledWith('c9');
+    expect(await screen.findByText('Course deleted.')).toBeInTheDocument();
+  });
+
+  it('shows the server reason when marks have been entered', async () => {
+    s.coursesService.remove.mockRejectedValue(
+      new ApiError('This course cannot be deleted because marks have been entered for 2 student(s).', { status: 422 }),
+    );
+    renderAt('/admin/courses', '/admin/courses', <CoursesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete course' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByText(/marks have been entered for 2 student/)).toBeInTheDocument();
+  });
+});
+
 describe('StudentsPage create form', () => {
   beforeEach(() => {
     mocks.auth.user = { role: 'admin', fullName: 'Ada Admin' };
     s.studentsService.list.mockImplementation(() => ok([], { page: 1, pageSize: 20, total: 0 }));
     s.programmesService.list.mockImplementation(() => ok([{ id: 'pr1', code: 'BSC-CS', name: 'BSc Computer Science' }]));
     s.studentsService.create.mockResolvedValue({ data: { id: 's1' } });
+  });
+
+  it('opens the create form straight away from a ?new=1 link', async () => {
+    renderAt('/admin/students?new=1', '/admin/students', <StudentsPage />);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
   it('validates required fields and password length before calling the API', async () => {
@@ -263,17 +301,66 @@ describe('StudentsPage create form', () => {
 describe('AdminDashboard', () => {
   it('shows institution totals and recent activity', async () => {
     mocks.auth.user = { role: 'admin', fullName: 'Ada Admin' };
-    s.reportsService.overview.mockImplementation(() => ok({ students: 8, activeStudents: 7, lecturers: 2, courses: 6, publishedResults: 22, passRate: 0.75 }));
+    s.reportsService.overview.mockImplementation(() => ok({ students: 8, activeStudents: 7, lecturers: 2, courses: 6, publishedResults: 22, readyToPublish: 5, incompleteResults: 3, passRate: 0.75 }));
     s.reportsService.coursePerformance.mockImplementation(() => ok([]));
     s.reportsService.gradeDistribution.mockImplementation(() => ok([{ grade: 'A', count: 3 }, { grade: 'F', count: 1 }]));
     s.auditService.list.mockImplementation(() => ok([{ id: 1, action: 'PUBLISH', entityType: 'results', createdAt: '2026-10-29T10:00:00Z', actor: { fullName: 'Lena Okafor' } }]));
     renderAt('/admin', '/admin', <AdminDashboard />);
     expect(await screen.findByText('Welcome, Ada')).toBeInTheDocument();
-    expect(await screen.findByText('22')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /published results\s*22/i })).toHaveAttribute('href', '/admin/results?publicationStatus=published');
+    const progress = screen.getByRole('table', { name: /results progress/i });
+    expect(within(progress).getByRole('row', { name: /ready to publish 5 17%/i })).toBeInTheDocument();
+    expect(within(progress).getByRole('row', { name: /missing marks 3 10%/i })).toBeInTheDocument();
     expect(screen.getByText('75.0% pass rate')).toBeInTheDocument();
     expect(screen.getByText('7 active')).toBeInTheDocument();
     expect(await screen.findByText('Lena Okafor')).toBeInTheDocument();
     expect(screen.getByText('Nothing is waiting for publication.')).toBeInTheDocument();
+  });
+});
+
+describe('LecturerDashboard', () => {
+  it('shows course KPIs, quick actions, recent results and results progress', async () => {
+    mocks.auth.user = { role: 'lecturer', fullName: 'Lena Okafor' };
+    s.reportsService.overview.mockImplementation(() =>
+      ok({ courses: 2, enrolledStudents: 40, resultsEntered: 36, incompleteResults: 4, publishedResults: 30, readyToPublish: 6, passRate: 0.8 }),
+    );
+    s.assignmentsService.mine.mockImplementation(() => ok([]));
+    s.resultsService.list.mockImplementation(() =>
+      ok([{ id: 'r1', student: { fullName: 'Amina Test' }, course: { code: 'CSC 101' }, grade: 'B', publicationStatus: 'draft', updatedAt: '2026-10-29T10:00:00Z' }]),
+    );
+    renderAt('/lecturer', '/lecturer', <LecturerDashboard />);
+    expect(await screen.findByRole('link', { name: /enrolled students\s*40/i })).toHaveAttribute('href', '/lecturer/courses');
+    expect(screen.getByRole('link', { name: /enter marks/i })).toHaveAttribute('href', '/lecturer/courses');
+    expect(await screen.findByText('Amina Test')).toBeInTheDocument();
+    expect(s.resultsService.list).toHaveBeenCalledWith(expect.objectContaining({ sort: 'updatedAt', order: 'desc' }));
+    const progress = screen.getByRole('table', { name: /results progress/i });
+    expect(within(progress).getByRole('row', { name: /published 30 75%/i })).toBeInTheDocument();
+    expect(within(progress).getByRole('row', { name: /missing marks 4 10%/i })).toBeInTheDocument();
+  });
+});
+
+describe('StudentDashboard', () => {
+  it('shows KPI tiles, quick actions, latest results and own grade counts', async () => {
+    mocks.auth.user = { role: 'student', fullName: 'Amina Test' };
+    const row = (id, code, grade, gradePoint, totalMark) => ({
+      id, course: { code, name: `Course ${code}`, creditUnits: 3 }, academicPeriod: period,
+      courseworkMark: 30, examinationMark: totalMark - 30, totalMark, grade, gradePoint, resultStatus: 'pass', publicationStatus: 'published',
+    });
+    s.studentsService.mySummary.mockImplementation(() =>
+      ok({ cumulative: { courses: 3, passCount: 3, failCount: 0, creditsEarned: 9, creditsAttempted: 9, average: 68.5, gpa: 3.33 }, periods: [] }),
+    );
+    s.studentsService.myResults.mockImplementation(() =>
+      ok([row('r1', 'CSC 101', 'A', 4, 75), row('r2', 'CSC 102', 'B', 3, 65), row('r3', 'MTH 101', 'A', 4, 72)]),
+    );
+    s.studentsService.myAssignments.mockImplementation(() => ok([]));
+    renderAt('/student', '/student', <StudentDashboard />);
+    expect(await screen.findByRole('link', { name: /cgpa\s*3\.33/i })).toHaveAttribute('href', '/student/performance');
+    expect(screen.getByRole('link', { name: /^statement$/i })).toHaveAttribute('href', '/student/statement');
+    expect(await screen.findByText('CSC 102')).toBeInTheDocument();
+    const grades = screen.getByRole('list', { name: 'Grade distribution' });
+    const items = within(grades).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent(/^A\s*2/);
+    expect(items[1]).toHaveTextContent(/^B\s*1/);
   });
 });
 

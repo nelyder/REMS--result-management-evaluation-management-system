@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ClipboardEdit, History } from 'lucide-react';
 import { DataTable } from '../../components/DataTable.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
@@ -12,6 +12,8 @@ import { useOptions } from '../../hooks/useOptions.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { formatMark, periodLabel } from '../../utils/format.js';
 
+const filterKeys = ['courseId', 'academicPeriodId', 'publicationStatus', 'resultStatus'];
+
 /** Searchable list of results. Admin: all results. Lecturer: results for assigned courses only (enforced by API). */
 export default function ResultsBrowserPage() {
   const { user } = useAuth();
@@ -22,7 +24,12 @@ export default function ResultsBrowserPage() {
     ? allCourses
     : [...new Map((mine.data || []).map((a) => [a.courseId, { value: a.courseId, label: `${a.course.code} — ${a.course.name}` }])).values()];
 
-  const q = useListQuery({ pageSize: 25, sort: { key: 'updatedAt', order: 'desc' } });
+  // Dashboard KPI links open this page pre-filtered, e.g. ?publicationStatus=published&resultStatus=pass.
+  const [searchParams] = useSearchParams();
+  const initialFilters = Object.fromEntries(
+    filterKeys.filter((k) => searchParams.get(k)).map((k) => [k, searchParams.get(k)]),
+  );
+  const q = useListQuery({ pageSize: 25, sort: { key: 'updatedAt', order: 'desc' }, filters: initialFilters });
   const list = useApi(() => resultsService.list(q.params), [JSON.stringify(q.params)]);
   const [historyFor, setHistoryFor] = useState(null);
   const base = isAdmin ? '/admin' : '/lecturer';
@@ -34,7 +41,7 @@ export default function ResultsBrowserPage() {
         description={isAdmin ? 'Search results across the institution.' : 'Search results for the courses assigned to you.'}
       />
       <Card bodyClassName="">
-        <div className="grid gap-3 border-b border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 border-b border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-6">
           <SearchInput value={q.search} onChange={q.setSearch} placeholder="Name or reg. number…" className="lg:col-span-2" />
           <Select aria-label="Course" value={q.filters.courseId ?? ''} onChange={(e) => q.setFilter('courseId', e.target.value)} options={courseOptions} placeholder="All courses" />
           <Select aria-label="Academic period" value={q.filters.academicPeriodId ?? ''} onChange={(e) => q.setFilter('academicPeriodId', e.target.value)} options={periods} placeholder="All periods" />
@@ -44,6 +51,13 @@ export default function ResultsBrowserPage() {
             onChange={(e) => q.setFilter('publicationStatus', e.target.value)}
             placeholder="Any status"
             options={['draft', 'submitted', 'published', 'corrected'].map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1) }))}
+          />
+          <Select
+            aria-label="Result"
+            value={q.filters.resultStatus ?? ''}
+            onChange={(e) => q.setFilter('resultStatus', e.target.value)}
+            placeholder="Any result"
+            options={['pass', 'fail', 'incomplete'].map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1) }))}
           />
         </div>
         <DataTable

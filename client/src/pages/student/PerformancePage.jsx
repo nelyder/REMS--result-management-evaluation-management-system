@@ -4,6 +4,8 @@ import { studentsService } from '../../services/index.js';
 import { useApi } from '../../hooks/useApi.js';
 import { formatMark, periodLabel } from '../../utils/format.js';
 
+const scrollToSemesters = () => document.getElementById('by-semester')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
 export default function PerformancePage() {
   const summary = useApi(() => studentsService.mySummary(), []);
   const c = summary.data?.cumulative || {};
@@ -13,12 +15,12 @@ export default function PerformancePage() {
     <>
       <PageHeader title="Academic performance" description="Summary of your published results, weighted by course credit units." />
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Courses" value={c.courses} icon={BookOpen} loading={summary.loading} hint={c.courses ? `${c.passCount} passed · ${c.failCount} failed` : undefined} />
-        <StatCard label="Credits earned" value={c.creditsAttempted != null ? `${c.creditsEarned}/${c.creditsAttempted}` : undefined} icon={CheckCircle2} tone="green" loading={summary.loading} />
-        <StatCard label="Weighted average" value={c.average != null ? formatMark(c.average) : undefined} icon={TrendingUp} tone="violet" loading={summary.loading} />
-        <StatCard label="CGPA" value={c.gpa} icon={Award} tone="amber" loading={summary.loading} />
+        <StatCard label="Courses" value={c.courses} icon={BookOpen} to="/student/results" actionLabel="View results" loading={summary.loading} hint={c.courses ? `${c.passCount} passed · ${c.failCount} failed` : undefined} />
+        <StatCard label="Credits earned" value={c.creditsAttempted != null ? `${c.creditsEarned}/${c.creditsAttempted}` : undefined} icon={CheckCircle2} tone="green" to="/student/statement" actionLabel="View statement" loading={summary.loading} />
+        <StatCard label="Weighted average" value={c.average != null ? formatMark(c.average) : undefined} icon={TrendingUp} tone="violet" onClick={scrollToSemesters} actionLabel="See by semester" loading={summary.loading} />
+        <StatCard label="CGPA" value={c.gpa} icon={Award} tone="amber" onClick={scrollToSemesters} actionLabel="See by semester" loading={summary.loading} />
       </div>
-      <Card title="By semester" bodyClassName="">
+      <Card id="by-semester" title="By semester" bodyClassName="">
         {summary.loading ? (
           <Spinner />
         ) : summary.error ? (

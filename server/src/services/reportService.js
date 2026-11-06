@@ -27,6 +27,9 @@ export async function overview(db, user, { academicPeriodId } = {}) {
     evaluatedResults: evaluated,
     passRate: evaluated ? passCount / evaluated : null,
     publishedResults: sum(rows, 'published'),
+    // Publication progress: published + ready to publish + incomplete covers the enrolled students.
+    readyToPublish: sum(rows, 'ready_to_publish'),
+    incompleteResults: sum(rows, 'incomplete'),
   };
 
   if (user.role === 'lecturer') {
@@ -38,7 +41,6 @@ export async function overview(db, user, { academicPeriodId } = {}) {
       courses: count ?? 0,
       enrolledStudents: sum(rows, 'enrolled'),
       resultsEntered: sum(rows, 'results_entered'),
-      incompleteResults: sum(rows, 'incomplete'),
     };
   }
 

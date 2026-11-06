@@ -83,6 +83,17 @@ export const courses = crud({
   conflictMessage: 'A course with this code already exists.',
 });
 
+/**
+ * Deletes a course and its enrollments in one transaction (`delete_course`), refusing (422)
+ * if any marks were entered or coursework exists. Returns the number of enrollments removed.
+ */
+courses.remove = async (db, id) => {
+  const { data } = check(await db.rpc('delete_course', { p_course_id: id }), {
+    referencedMessage: 'This course is still referenced by other records and cannot be deleted.',
+  });
+  return data;
+};
+
 export const periods = crud({
   table: 'academic_periods',
   map: mapPeriod,

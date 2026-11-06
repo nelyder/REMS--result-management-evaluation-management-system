@@ -61,7 +61,7 @@ router.patch('/users/:profileId/status', admin, validate({ params: s.profilePara
 const reference = [
   ['/departments', departments, s.departmentBody, s.listQuery, true],
   ['/programmes', programmes, s.programmeBody, s.programmeListQuery, true],
-  ['/courses', courses, s.courseBody, s.courseListQuery, false],
+  ['/courses', courses, s.courseBody, s.courseListQuery, true],
   ['/academic-periods', periods, s.periodBody, s.periodListQuery, false],
 ];
 for (const [path, c, body, query, deletable] of reference) {

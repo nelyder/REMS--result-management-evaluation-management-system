@@ -12,13 +12,13 @@ vi.mock('../src/services/supabase.js', () => ({ supabase: null, isSupabaseConfig
 
 const { ProtectedRoute } = await import('../src/components/ProtectedRoute.jsx');
 const { default: LoginPage } = await import('../src/pages/public/LoginPage.jsx');
-const { ConfirmDialog } = await import('../src/components/ui/index.js');
+const { ConfirmDialog, StatCard } = await import('../src/components/ui/index.js');
 const { ThemeProvider } = await import('../src/contexts/ThemeContext.jsx');
 const { ThemeToggle } = await import('../src/components/ThemeToggle.jsx');
 
 function renderGuard(path, roles) {
   return render(
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={<p>login page</p>} />
         <Route path="/unauthorized" element={<p>unauthorized page</p>} />
@@ -56,7 +56,7 @@ describe('LoginPage', () => {
   const renderLogin = () =>
     render(
       <ThemeProvider>
-        <MemoryRouter initialEntries={['/login']}>
+        <MemoryRouter initialEntries={['/login']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/lecturer" element={<p>lecturer home</p>} />
@@ -129,5 +129,34 @@ describe('ThemeToggle', () => {
     window.localStorage.setItem('rems-theme', 'dark');
     render(<ThemeProvider><ThemeToggle /></ThemeProvider>);
     expect(document.documentElement).toHaveClass('dark');
+  });
+});
+
+describe('StatCard', () => {
+  it('is static without a destination', () => {
+    render(<StatCard label="Students" value={12} />);
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('navigates when given a route', async () => {
+    render(
+      <MemoryRouter initialEntries={['/admin']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Routes>
+          <Route path="/admin" element={<StatCard label="Students" value={12} to="/admin/students" actionLabel="Manage students" />} />
+          <Route path="/admin/students" element={<p>students page</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole('link', { name: /students.*12.*manage students/i }));
+    expect(screen.getByText('students page')).toBeInTheDocument();
+  });
+
+  it('runs onClick as a keyboard-accessible button', async () => {
+    const onClick = vi.fn();
+    render(<StatCard label="CGPA" value="3.4" onClick={onClick} />);
+    screen.getByRole('button', { name: /cgpa/i }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onClick).toHaveBeenCalledOnce();
   });
 });
